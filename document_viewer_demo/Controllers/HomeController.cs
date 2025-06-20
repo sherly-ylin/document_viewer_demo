@@ -23,8 +23,9 @@ namespace document_viewer_demo.Controllers
             try
             {
                 // Load template, merge data, and get the merged document
-                string mergedDocumentBase64 = LoadTemplateAndMergeData();
-                
+                // string mergedDocumentBase64 = LoadTemplateAndMergeData();
+                string mergedDocumentBase64 = LoadTemplateAndMergeMultipleOrders(new List<int> { 7261, 7262, 7264});
+
                 ViewBag.HasDocument = true;
                 ViewBag.DocumentData = mergedDocumentBase64;
             }
@@ -37,7 +38,66 @@ namespace document_viewer_demo.Controllers
 
             return View();
         }
+        private string LoadTemplateAndMergeMultipleOrders(List<int> orderIds)
+        {
+            Console.WriteLine("Merging multiple orders: " + string.Join(", ", orderIds));
+            using (ServerTextControl masterTx = new ServerTextControl())
+            {
+                masterTx.Create();
+                bool isFirstDoc = true;
+                foreach (var orderId in orderIds)
+                {
+                    Console.WriteLine("Processing OrderId: " + orderId);
+                    using (ServerTextControl tx = new ServerTextControl())
+                    {
+                        tx.Create();
 
+                        // Load the template
+                        var loadSettings = new LoadSettings
+                        {
+                            ApplicationFieldFormat = ApplicationFieldFormat.MSWord,
+                            LoadSubTextParts = true
+                        };
+                        tx.Load("Documents/template_order.docx", StreamType.WordprocessingML, loadSettings);
+
+                        SNOrder dbOrder = GetOrderFromDb(orderId);
+
+                        using (MailMerge mailMerge = new MailMerge { TextComponent = masterTx })
+                        {
+                            mailMerge.FormFieldMergeType = FormFieldMergeType.None;
+                            mailMerge.MergeObject(dbOrder);
+                        }
+
+                        byte[] bytes;
+                        tx.Save(out bytes, BinaryStreamType.InternalUnicodeFormat);
+
+                        if (isFirstDoc)
+                        {
+                            masterTx.Load(bytes, BinaryStreamType.InternalUnicodeFormat);
+                            isFirstDoc = false;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Appending page break");
+                            masterTx.Append("\f", StringStreamType.PlainText, AppendSettings.None);
+                            Console.WriteLine("Appending document for OrderId: " + orderId);
+                            masterTx.Append(bytes, BinaryStreamType.InternalUnicodeFormat, AppendSettings.None);
+                        }
+                    }
+                }
+
+                // Save the merged document to a byte array
+                byte[] documentBytes;
+                var saveSettings = new SaveSettings
+                {
+                    CreatorApplication = "Document Viewer Demo"
+                };
+
+                masterTx.Save(out documentBytes, BinaryStreamType.InternalUnicodeFormat, saveSettings);
+
+                return Convert.ToBase64String(documentBytes);
+            }
+        }
         private string LoadTemplateAndMergeData()
         {
             using (ServerTextControl tx = new ServerTextControl())
@@ -50,7 +110,7 @@ namespace document_viewer_demo.Controllers
                     ApplicationFieldFormat = ApplicationFieldFormat.MSWord,
                     LoadSubTextParts = true
                 };
-                
+
                 tx.Load("Documents/template_order.docx", StreamType.WordprocessingML, loadSettings);
 
                 // Get data from database
@@ -69,9 +129,9 @@ namespace document_viewer_demo.Controllers
                 {
                     CreatorApplication = "Document Viewer Demo"
                 };
-                
+
                 tx.Save(out documentBytes, BinaryStreamType.InternalUnicodeFormat, saveSettings);
-                
+
                 return Convert.ToBase64String(documentBytes);
             }
         }
@@ -154,7 +214,7 @@ namespace document_viewer_demo.Controllers
                         ApplicationFieldFormat = ApplicationFieldFormat.MSWord,
                         LoadSubTextParts = true
                     };
-                    
+
                     tx.Load("Documents/template_order.docx", StreamType.WordprocessingML, loadSettings);
 
                     SNOrder dbOrder = GetOrderFromDb(orderId);
@@ -168,7 +228,7 @@ namespace document_viewer_demo.Controllers
                     // Export as PDF
                     byte[] pdfBytes;
                     tx.Save(out pdfBytes, BinaryStreamType.AdobePDF);
-                    
+
                     return File(pdfBytes, "application/pdf", $"Order_{orderId}.pdf");
                 }
             }
