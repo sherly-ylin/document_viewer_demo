@@ -20,28 +20,6 @@
           "lib/netstandard1.0/_._": {}
         }
       },
-      "Microsoft.Win32.SystemEvents/6.0.0": {
-        "type": "package",
-        "compile": {
-          "lib/net6.0/Microsoft.Win32.SystemEvents.dll": {
-            "related": ".xml"
-          }
-        },
-        "runtime": {
-          "lib/net6.0/Microsoft.Win32.SystemEvents.dll": {
-            "related": ".xml"
-          }
-        },
-        "build": {
-          "buildTransitive/netcoreapp3.1/_._": {}
-        },
-        "runtimeTargets": {
-          "runtimes/win/lib/net6.0/Microsoft.Win32.SystemEvents.dll": {
-            "assetType": "runtime",
-            "rid": "win"
-          }
-        }
-      },
       "Newtonsoft.Json/13.0.1": {
         "type": "package",
         "compile": {
@@ -292,35 +270,6 @@
         "compile": {
           "ref/netstandard1.5/_._": {
             "related": ".xml"
-          }
-        }
-      },
-      "System.Drawing.Common/6.0.0": {
-        "type": "package",
-        "dependencies": {
-          "Microsoft.Win32.SystemEvents": "6.0.0"
-        },
-        "compile": {
-          "lib/net6.0/System.Drawing.Common.dll": {
-            "related": ".xml"
-          }
-        },
-        "runtime": {
-          "lib/net6.0/System.Drawing.Common.dll": {
-            "related": ".xml"
-          }
-        },
-        "build": {
-          "buildTransitive/netcoreapp3.1/_._": {}
-        },
-        "runtimeTargets": {
-          "runtimes/unix/lib/net6.0/System.Drawing.Common.dll": {
-            "assetType": "runtime",
-            "rid": "unix"
-          },
-          "runtimes/win/lib/net6.0/System.Drawing.Common.dll": {
-            "assetType": "runtime",
-            "rid": "win"
           }
         }
       },
@@ -874,44 +823,639 @@
           }
         }
       },
-      "TXTextControl.TextControl.ASP.SDK/33.0.1": {
+      "TXTextControl.TextControl.Core.SDK/33.0.1": {
         "type": "package",
-        "dependencies": {
-          "System.Drawing.Common": "6.0.0"
-        },
         "compile": {
           "lib/net8.0/TXBarcode.dll": {},
-          "lib/net8.0/TXDocumentServer.Web.DocumentViewer.dll": {},
-          "lib/net8.0/TXDocumentServer.dll": {},
+          "lib/net8.0/TXDocumentServer.Core.dll": {},
           "lib/net8.0/TXDrawing.dll": {},
-          "lib/net8.0/TXTextControl.Server.dll": {},
-          "lib/net8.0/TXTextControl.dll": {},
-          "lib/net8.0/txpdf.dll": {}
+          "lib/net8.0/TXSVGResources.dll": {},
+          "lib/net8.0/TXTextControl.Core.dll": {},
+          "lib/net8.0/TXTextControl.Server.Core.dll": {}
         },
         "runtime": {
           "lib/net8.0/TXBarcode.dll": {},
-          "lib/net8.0/TXDocumentServer.Web.DocumentViewer.dll": {},
-          "lib/net8.0/TXDocumentServer.dll": {},
+          "lib/net8.0/TXDocumentServer.Core.dll": {},
           "lib/net8.0/TXDrawing.dll": {},
-          "lib/net8.0/TXTextControl.Server.dll": {},
-          "lib/net8.0/TXTextControl.dll": {},
-          "lib/net8.0/txpdf.dll": {}
+          "lib/net8.0/TXSVGResources.dll": {},
+          "lib/net8.0/TXTextControl.Core.dll": {},
+          "lib/net8.0/TXTextControl.Server.Core.dll": {}
         },
         "resource": {
           "lib/net8.0/de/TXBarcode.resources.dll": {
             "locale": "de"
           },
-          "lib/net8.0/de/TXDocumentServer.resources.dll": {
+          "lib/net8.0/de/TXDocumentServer.Core.resources.dll": {
             "locale": "de"
           },
           "lib/net8.0/de/TXDrawing.resources.dll": {
             "locale": "de"
           },
-          "lib/net8.0/de/TXTextControl.resources.dll": {
+          "lib/net8.0/de/TXTextControl.Core.resources.dll": {
             "locale": "de"
           }
         },
         "contentFiles": {
+          "contentFiles/any/any/Fonts/Alegreya-Italic-VariableFont_wght.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Alegreya-Italic-VariableFont_wght.ttf"
+          },
+          "contentFiles/any/any/Fonts/Alegreya-VariableFont_wght.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Alegreya-VariableFont_wght.ttf"
+          },
+          "contentFiles/any/any/Fonts/Aleo-Italic-VariableFont_wght.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Aleo-Italic-VariableFont_wght.ttf"
+          },
+          "contentFiles/any/any/Fonts/Aleo-VariableFont_wght.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Aleo-VariableFont_wght.ttf"
+          },
+          "contentFiles/any/any/Fonts/Assistant-VariableFont_wght.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Assistant-VariableFont_wght.ttf"
+          },
+          "contentFiles/any/any/Fonts/DMSerifText-Italic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/DMSerifText-Italic.ttf"
+          },
+          "contentFiles/any/any/Fonts/DMSerifText-Regular.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/DMSerifText-Regular.ttf"
+          },
+          "contentFiles/any/any/Fonts/Lato-Black.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Lato-Black.ttf"
+          },
+          "contentFiles/any/any/Fonts/Lato-BlackItalic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Lato-BlackItalic.ttf"
+          },
+          "contentFiles/any/any/Fonts/Lato-Bold.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Lato-Bold.ttf"
+          },
+          "contentFiles/any/any/Fonts/Lato-BoldItalic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Lato-BoldItalic.ttf"
+          },
+          "contentFiles/any/any/Fonts/Lato-Italic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Lato-Italic.ttf"
+          },
+          "contentFiles/any/any/Fonts/Lato-Light.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Lato-Light.ttf"
+          },
+          "contentFiles/any/any/Fonts/Lato-LightItalic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Lato-LightItalic.ttf"
+          },
+          "contentFiles/any/any/Fonts/Lato-Regular.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Lato-Regular.ttf"
+          },
+          "contentFiles/any/any/Fonts/Lato-Thin.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Lato-Thin.ttf"
+          },
+          "contentFiles/any/any/Fonts/Lato-ThinItalic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Lato-ThinItalic.ttf"
+          },
+          "contentFiles/any/any/Fonts/LiberationMono-Bold.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/LiberationMono-Bold.ttf"
+          },
+          "contentFiles/any/any/Fonts/LiberationMono-BoldItalic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/LiberationMono-BoldItalic.ttf"
+          },
+          "contentFiles/any/any/Fonts/LiberationMono-Italic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/LiberationMono-Italic.ttf"
+          },
+          "contentFiles/any/any/Fonts/LiberationMono-Regular.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/LiberationMono-Regular.ttf"
+          },
+          "contentFiles/any/any/Fonts/LiberationSans-Bold.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/LiberationSans-Bold.ttf"
+          },
+          "contentFiles/any/any/Fonts/LiberationSans-BoldItalic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/LiberationSans-BoldItalic.ttf"
+          },
+          "contentFiles/any/any/Fonts/LiberationSans-Italic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/LiberationSans-Italic.ttf"
+          },
+          "contentFiles/any/any/Fonts/LiberationSans-Regular.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/LiberationSans-Regular.ttf"
+          },
+          "contentFiles/any/any/Fonts/LiberationSansNarrow-Bold.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/LiberationSansNarrow-Bold.ttf"
+          },
+          "contentFiles/any/any/Fonts/LiberationSansNarrow-BoldItalic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/LiberationSansNarrow-BoldItalic.ttf"
+          },
+          "contentFiles/any/any/Fonts/LiberationSansNarrow-Italic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/LiberationSansNarrow-Italic.ttf"
+          },
+          "contentFiles/any/any/Fonts/LiberationSansNarrow-Regular.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/LiberationSansNarrow-Regular.ttf"
+          },
+          "contentFiles/any/any/Fonts/LiberationSerif-Bold.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/LiberationSerif-Bold.ttf"
+          },
+          "contentFiles/any/any/Fonts/LiberationSerif-BoldItalic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/LiberationSerif-BoldItalic.ttf"
+          },
+          "contentFiles/any/any/Fonts/LiberationSerif-Italic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/LiberationSerif-Italic.ttf"
+          },
+          "contentFiles/any/any/Fonts/LiberationSerif-Regular.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/LiberationSerif-Regular.ttf"
+          },
+          "contentFiles/any/any/Fonts/Merriweather-Black.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Merriweather-Black.ttf"
+          },
+          "contentFiles/any/any/Fonts/Merriweather-BlackItalic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Merriweather-BlackItalic.ttf"
+          },
+          "contentFiles/any/any/Fonts/Merriweather-Bold.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Merriweather-Bold.ttf"
+          },
+          "contentFiles/any/any/Fonts/Merriweather-BoldItalic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Merriweather-BoldItalic.ttf"
+          },
+          "contentFiles/any/any/Fonts/Merriweather-Italic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Merriweather-Italic.ttf"
+          },
+          "contentFiles/any/any/Fonts/Merriweather-Light.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Merriweather-Light.ttf"
+          },
+          "contentFiles/any/any/Fonts/Merriweather-LightItalic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Merriweather-LightItalic.ttf"
+          },
+          "contentFiles/any/any/Fonts/Merriweather-Regular.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Merriweather-Regular.ttf"
+          },
+          "contentFiles/any/any/Fonts/MerriweatherSans-Italic-VariableFont_wght.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/MerriweatherSans-Italic-VariableFont_wght.ttf"
+          },
+          "contentFiles/any/any/Fonts/MerriweatherSans-VariableFont_wght.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/MerriweatherSans-VariableFont_wght.ttf"
+          },
+          "contentFiles/any/any/Fonts/Montserrat-Italic-VariableFont_wght.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Montserrat-Italic-VariableFont_wght.ttf"
+          },
+          "contentFiles/any/any/Fonts/Montserrat-VariableFont_wght.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Montserrat-VariableFont_wght.ttf"
+          },
+          "contentFiles/any/any/Fonts/NotoSans-Italic-VariableFont_wdth,wght.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/NotoSans-Italic-VariableFont_wdth,wght.ttf"
+          },
+          "contentFiles/any/any/Fonts/NotoSans-VariableFont_wdth,wght.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/NotoSans-VariableFont_wdth,wght.ttf"
+          },
+          "contentFiles/any/any/Fonts/NotoSansJP-Regular.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/NotoSansJP-Regular.ttf"
+          },
+          "contentFiles/any/any/Fonts/NotoSansKR-Regular.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/NotoSansKR-Regular.ttf"
+          },
+          "contentFiles/any/any/Fonts/NotoSansSC-Regular.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/NotoSansSC-Regular.ttf"
+          },
+          "contentFiles/any/any/Fonts/NotoSansSymbols2-Regular.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/NotoSansSymbols2-Regular.ttf"
+          },
+          "contentFiles/any/any/Fonts/NotoSansTC-Regular.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/NotoSansTC-Regular.ttf"
+          },
+          "contentFiles/any/any/Fonts/Nunito-Italic-VariableFont_wght.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Nunito-Italic-VariableFont_wght.ttf"
+          },
+          "contentFiles/any/any/Fonts/Nunito-VariableFont_wght.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Nunito-VariableFont_wght.ttf"
+          },
+          "contentFiles/any/any/Fonts/OpenSans-Italic-VariableFont_wdth,wght.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/OpenSans-Italic-VariableFont_wdth,wght.ttf"
+          },
+          "contentFiles/any/any/Fonts/OpenSans-VariableFont_wdth,wght.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/OpenSans-VariableFont_wdth,wght.ttf"
+          },
+          "contentFiles/any/any/Fonts/Oswald-VariableFont_wght.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Oswald-VariableFont_wght.ttf"
+          },
+          "contentFiles/any/any/Fonts/PTSans-Bold.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/PTSans-Bold.ttf"
+          },
+          "contentFiles/any/any/Fonts/PTSans-BoldItalic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/PTSans-BoldItalic.ttf"
+          },
+          "contentFiles/any/any/Fonts/PTSans-Italic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/PTSans-Italic.ttf"
+          },
+          "contentFiles/any/any/Fonts/PTSans-Regular.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/PTSans-Regular.ttf"
+          },
+          "contentFiles/any/any/Fonts/Pacifico-Regular.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Pacifico-Regular.ttf"
+          },
+          "contentFiles/any/any/Fonts/Prompt-Black.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Prompt-Black.ttf"
+          },
+          "contentFiles/any/any/Fonts/Prompt-BlackItalic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Prompt-BlackItalic.ttf"
+          },
+          "contentFiles/any/any/Fonts/Prompt-Bold.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Prompt-Bold.ttf"
+          },
+          "contentFiles/any/any/Fonts/Prompt-BoldItalic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Prompt-BoldItalic.ttf"
+          },
+          "contentFiles/any/any/Fonts/Prompt-ExtraBold.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Prompt-ExtraBold.ttf"
+          },
+          "contentFiles/any/any/Fonts/Prompt-ExtraBoldItalic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Prompt-ExtraBoldItalic.ttf"
+          },
+          "contentFiles/any/any/Fonts/Prompt-ExtraLight.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Prompt-ExtraLight.ttf"
+          },
+          "contentFiles/any/any/Fonts/Prompt-ExtraLightItalic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Prompt-ExtraLightItalic.ttf"
+          },
+          "contentFiles/any/any/Fonts/Prompt-Italic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Prompt-Italic.ttf"
+          },
+          "contentFiles/any/any/Fonts/Prompt-Light.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Prompt-Light.ttf"
+          },
+          "contentFiles/any/any/Fonts/Prompt-LightItalic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Prompt-LightItalic.ttf"
+          },
+          "contentFiles/any/any/Fonts/Prompt-Medium.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Prompt-Medium.ttf"
+          },
+          "contentFiles/any/any/Fonts/Prompt-MediumItalic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Prompt-MediumItalic.ttf"
+          },
+          "contentFiles/any/any/Fonts/Prompt-Regular.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Prompt-Regular.ttf"
+          },
+          "contentFiles/any/any/Fonts/Prompt-SemiBold.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Prompt-SemiBold.ttf"
+          },
+          "contentFiles/any/any/Fonts/Prompt-SemiBoldItalic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Prompt-SemiBoldItalic.ttf"
+          },
+          "contentFiles/any/any/Fonts/Prompt-Thin.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Prompt-Thin.ttf"
+          },
+          "contentFiles/any/any/Fonts/Prompt-ThinItalic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Prompt-ThinItalic.ttf"
+          },
+          "contentFiles/any/any/Fonts/Raleway-Italic-VariableFont_wght.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Raleway-Italic-VariableFont_wght.ttf"
+          },
+          "contentFiles/any/any/Fonts/Raleway-VariableFont_wght.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Raleway-VariableFont_wght.ttf"
+          },
+          "contentFiles/any/any/Fonts/Roboto-Black.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Roboto-Black.ttf"
+          },
+          "contentFiles/any/any/Fonts/Roboto-BlackItalic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Roboto-BlackItalic.ttf"
+          },
+          "contentFiles/any/any/Fonts/Roboto-Bold.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Roboto-Bold.ttf"
+          },
+          "contentFiles/any/any/Fonts/Roboto-BoldItalic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Roboto-BoldItalic.ttf"
+          },
+          "contentFiles/any/any/Fonts/Roboto-Italic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Roboto-Italic.ttf"
+          },
+          "contentFiles/any/any/Fonts/Roboto-Light.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Roboto-Light.ttf"
+          },
+          "contentFiles/any/any/Fonts/Roboto-LightItalic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Roboto-LightItalic.ttf"
+          },
+          "contentFiles/any/any/Fonts/Roboto-Medium.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Roboto-Medium.ttf"
+          },
+          "contentFiles/any/any/Fonts/Roboto-MediumItalic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Roboto-MediumItalic.ttf"
+          },
+          "contentFiles/any/any/Fonts/Roboto-Regular.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Roboto-Regular.ttf"
+          },
+          "contentFiles/any/any/Fonts/Roboto-Thin.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Roboto-Thin.ttf"
+          },
+          "contentFiles/any/any/Fonts/Roboto-ThinItalic.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Roboto-ThinItalic.ttf"
+          },
+          "contentFiles/any/any/Fonts/Slabo27px-Regular.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/Slabo27px-Regular.ttf"
+          },
+          "contentFiles/any/any/Fonts/SourceSans3-Italic-VariableFont_wght.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/SourceSans3-Italic-VariableFont_wght.ttf"
+          },
+          "contentFiles/any/any/Fonts/SourceSans3-VariableFont_wght.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/SourceSans3-VariableFont_wght.ttf"
+          },
+          "contentFiles/any/any/Fonts/WorkSans-Italic-VariableFont_wght.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/WorkSans-Italic-VariableFont_wght.ttf"
+          },
+          "contentFiles/any/any/Fonts/WorkSans-VariableFont_wght.ttf": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/WorkSans-VariableFont_wght.ttf"
+          },
+          "contentFiles/any/any/Fonts/licenses.txt": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "Fonts/licenses.txt"
+          },
           "contentFiles/any/any/txtextcontrol.server.license": {
             "buildAction": "EmbeddedResource",
             "codeLanguage": "any",
@@ -919,47 +1463,91 @@
           }
         },
         "runtimeTargets": {
-          "runtimes/win-x64/native/tx33.dll": {
+          "runtimes/linux-x64/native/tx33_css.so": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/tx33_dox.so": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/tx33_htm.so": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/tx33_ic.so": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/tx33_pdf.so": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/tx33_pdfdata.so": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/tx33_xlx.so": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/tx33core.so": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/tx33core_tls.so": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/txdomprs.so": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/txfntmgr.so": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/txsvggen.so": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/txwndmgr.so": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/win-x64/native/tx33_pdfdata.dll": {
             "assetType": "native",
             "rid": "win-x64"
           },
-          "runtimes/win-x64/native/tx33_css.dll": {
+          "runtimes/win-x64/native/tx33core.dll": {
             "assetType": "native",
             "rid": "win-x64"
           },
-          "runtimes/win-x64/native/tx33_doc.dll": {
+          "runtimes/win-x64/native/tx33core_css.dll": {
             "assetType": "native",
             "rid": "win-x64"
           },
-          "runtimes/win-x64/native/tx33_dox.dll": {
+          "runtimes/win-x64/native/tx33core_dox.dll": {
             "assetType": "native",
             "rid": "win-x64"
           },
-          "runtimes/win-x64/native/tx33_htm.dll": {
+          "runtimes/win-x64/native/tx33core_htm.dll": {
             "assetType": "native",
             "rid": "win-x64"
           },
-          "runtimes/win-x64/native/tx33_ic.dll": {
+          "runtimes/win-x64/native/tx33core_ic.dll": {
             "assetType": "native",
             "rid": "win-x64"
           },
-          "runtimes/win-x64/native/tx33_pdf.dll": {
+          "runtimes/win-x64/native/tx33core_pdf.dll": {
             "assetType": "native",
             "rid": "win-x64"
           },
-          "runtimes/win-x64/native/tx33_rtf.dll": {
+          "runtimes/win-x64/native/tx33core_tls.dll": {
             "assetType": "native",
             "rid": "win-x64"
           },
-          "runtimes/win-x64/native/tx33_tls.dll": {
-            "assetType": "native",
-            "rid": "win-x64"
-          },
-          "runtimes/win-x64/native/tx33_xlx.dll": {
-            "assetType": "native",
-            "rid": "win-x64"
-          },
-          "runtimes/win-x64/native/tx33_xml.dll": {
+          "runtimes/win-x64/native/tx33core_xlx.dll": {
             "assetType": "native",
             "rid": "win-x64"
           },
@@ -967,61 +1555,17 @@
             "assetType": "native",
             "rid": "win-x64"
           },
+          "runtimes/win-x64/native/txfntmgr.dll": {
+            "assetType": "native",
+            "rid": "win-x64"
+          },
           "runtimes/win-x64/native/txsvggen.dll": {
             "assetType": "native",
             "rid": "win-x64"
           },
-          "runtimes/win-x86/native/tx33.dll": {
+          "runtimes/win-x64/native/txwndmgr.dll": {
             "assetType": "native",
-            "rid": "win-x86"
-          },
-          "runtimes/win-x86/native/tx33_css.dll": {
-            "assetType": "native",
-            "rid": "win-x86"
-          },
-          "runtimes/win-x86/native/tx33_doc.dll": {
-            "assetType": "native",
-            "rid": "win-x86"
-          },
-          "runtimes/win-x86/native/tx33_dox.dll": {
-            "assetType": "native",
-            "rid": "win-x86"
-          },
-          "runtimes/win-x86/native/tx33_htm.dll": {
-            "assetType": "native",
-            "rid": "win-x86"
-          },
-          "runtimes/win-x86/native/tx33_ic.dll": {
-            "assetType": "native",
-            "rid": "win-x86"
-          },
-          "runtimes/win-x86/native/tx33_pdf.dll": {
-            "assetType": "native",
-            "rid": "win-x86"
-          },
-          "runtimes/win-x86/native/tx33_rtf.dll": {
-            "assetType": "native",
-            "rid": "win-x86"
-          },
-          "runtimes/win-x86/native/tx33_tls.dll": {
-            "assetType": "native",
-            "rid": "win-x86"
-          },
-          "runtimes/win-x86/native/tx33_xlx.dll": {
-            "assetType": "native",
-            "rid": "win-x86"
-          },
-          "runtimes/win-x86/native/tx33_xml.dll": {
-            "assetType": "native",
-            "rid": "win-x86"
-          },
-          "runtimes/win-x86/native/txdomprs.dll": {
-            "assetType": "native",
-            "rid": "win-x86"
-          },
-          "runtimes/win-x86/native/txsvggen.dll": {
-            "assetType": "native",
-            "rid": "win-x86"
+            "rid": "win-x64"
           }
         }
       },
@@ -1076,35 +1620,6 @@
         "microsoft.netcore.targets.1.1.0.nupkg.sha512",
         "microsoft.netcore.targets.nuspec",
         "runtime.json"
-      ]
-    },
-    "Microsoft.Win32.SystemEvents/6.0.0": {
-      "sha512": "hqTM5628jSsQiv+HGpiq3WKBl2c8v1KZfby2J6Pr7pEPlK9waPdgEO6b8A/+/xn/yZ9ulv8HuqK71ONy2tg67A==",
-      "type": "package",
-      "path": "microsoft.win32.systemevents/6.0.0",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "Icon.png",
-        "LICENSE.TXT",
-        "THIRD-PARTY-NOTICES.TXT",
-        "buildTransitive/netcoreapp2.0/Microsoft.Win32.SystemEvents.targets",
-        "buildTransitive/netcoreapp3.1/_._",
-        "lib/net461/Microsoft.Win32.SystemEvents.dll",
-        "lib/net461/Microsoft.Win32.SystemEvents.xml",
-        "lib/net6.0/Microsoft.Win32.SystemEvents.dll",
-        "lib/net6.0/Microsoft.Win32.SystemEvents.xml",
-        "lib/netcoreapp3.1/Microsoft.Win32.SystemEvents.dll",
-        "lib/netcoreapp3.1/Microsoft.Win32.SystemEvents.xml",
-        "lib/netstandard2.0/Microsoft.Win32.SystemEvents.dll",
-        "lib/netstandard2.0/Microsoft.Win32.SystemEvents.xml",
-        "microsoft.win32.systemevents.6.0.0.nupkg.sha512",
-        "microsoft.win32.systemevents.nuspec",
-        "runtimes/win/lib/net6.0/Microsoft.Win32.SystemEvents.dll",
-        "runtimes/win/lib/net6.0/Microsoft.Win32.SystemEvents.xml",
-        "runtimes/win/lib/netcoreapp3.1/Microsoft.Win32.SystemEvents.dll",
-        "runtimes/win/lib/netcoreapp3.1/Microsoft.Win32.SystemEvents.xml",
-        "useSharedDesignerContext.txt"
       ]
     },
     "Newtonsoft.Json/13.0.1": {
@@ -1657,45 +2172,6 @@
         "ref/xamarinwatchos10/_._",
         "system.diagnostics.tracing.4.3.0.nupkg.sha512",
         "system.diagnostics.tracing.nuspec"
-      ]
-    },
-    "System.Drawing.Common/6.0.0": {
-      "sha512": "NfuoKUiP2nUWwKZN6twGqXioIe1zVD0RIj2t976A+czLHr2nY454RwwXs6JU9Htc6mwqL6Dn/nEL3dpVf2jOhg==",
-      "type": "package",
-      "path": "system.drawing.common/6.0.0",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "Icon.png",
-        "LICENSE.TXT",
-        "THIRD-PARTY-NOTICES.TXT",
-        "buildTransitive/netcoreapp2.0/System.Drawing.Common.targets",
-        "buildTransitive/netcoreapp3.1/_._",
-        "lib/MonoAndroid10/_._",
-        "lib/MonoTouch10/_._",
-        "lib/net461/System.Drawing.Common.dll",
-        "lib/net461/System.Drawing.Common.xml",
-        "lib/net6.0/System.Drawing.Common.dll",
-        "lib/net6.0/System.Drawing.Common.xml",
-        "lib/netcoreapp3.1/System.Drawing.Common.dll",
-        "lib/netcoreapp3.1/System.Drawing.Common.xml",
-        "lib/netstandard2.0/System.Drawing.Common.dll",
-        "lib/netstandard2.0/System.Drawing.Common.xml",
-        "lib/xamarinios10/_._",
-        "lib/xamarinmac20/_._",
-        "lib/xamarintvos10/_._",
-        "lib/xamarinwatchos10/_._",
-        "runtimes/unix/lib/net6.0/System.Drawing.Common.dll",
-        "runtimes/unix/lib/net6.0/System.Drawing.Common.xml",
-        "runtimes/unix/lib/netcoreapp3.1/System.Drawing.Common.dll",
-        "runtimes/unix/lib/netcoreapp3.1/System.Drawing.Common.xml",
-        "runtimes/win/lib/net6.0/System.Drawing.Common.dll",
-        "runtimes/win/lib/net6.0/System.Drawing.Common.xml",
-        "runtimes/win/lib/netcoreapp3.1/System.Drawing.Common.dll",
-        "runtimes/win/lib/netcoreapp3.1/System.Drawing.Common.xml",
-        "system.drawing.common.6.0.0.nupkg.sha512",
-        "system.drawing.common.nuspec",
-        "useSharedDesignerContext.txt"
       ]
     },
     "System.Globalization/4.3.0": {
@@ -3202,56 +3678,155 @@
         "system.threading.tasks.nuspec"
       ]
     },
-    "TXTextControl.TextControl.ASP.SDK/33.0.1": {
-      "sha512": "OfxsxZ9ewc04RwM9XEIKAwxa0TGt/M7NovxKrqcAanEypjk5MSBRbuz7NKuQMBqOY5ombGQKShd37zWqgmbBmA==",
+    "TXTextControl.TextControl.Core.SDK/33.0.1": {
+      "sha512": "u0W7+42cuL9ASCp6+TYO2N/3SR1DbAFXN+2o+4FGYV/mv8Hp5JQj6e9nX+agBQxPsGlYLOxiuitdUrljVnm5DA==",
       "type": "package",
-      "path": "txtextcontrol.textcontrol.asp.sdk/33.0.1",
+      "path": "txtextcontrol.textcontrol.core.sdk/33.0.1",
       "hasTools": true,
       "files": [
         ".nupkg.metadata",
         "LICENSE.md",
+        "contentFiles/any/any/Fonts/Alegreya-Italic-VariableFont_wght.ttf",
+        "contentFiles/any/any/Fonts/Alegreya-VariableFont_wght.ttf",
+        "contentFiles/any/any/Fonts/Aleo-Italic-VariableFont_wght.ttf",
+        "contentFiles/any/any/Fonts/Aleo-VariableFont_wght.ttf",
+        "contentFiles/any/any/Fonts/Assistant-VariableFont_wght.ttf",
+        "contentFiles/any/any/Fonts/DMSerifText-Italic.ttf",
+        "contentFiles/any/any/Fonts/DMSerifText-Regular.ttf",
+        "contentFiles/any/any/Fonts/Lato-Black.ttf",
+        "contentFiles/any/any/Fonts/Lato-BlackItalic.ttf",
+        "contentFiles/any/any/Fonts/Lato-Bold.ttf",
+        "contentFiles/any/any/Fonts/Lato-BoldItalic.ttf",
+        "contentFiles/any/any/Fonts/Lato-Italic.ttf",
+        "contentFiles/any/any/Fonts/Lato-Light.ttf",
+        "contentFiles/any/any/Fonts/Lato-LightItalic.ttf",
+        "contentFiles/any/any/Fonts/Lato-Regular.ttf",
+        "contentFiles/any/any/Fonts/Lato-Thin.ttf",
+        "contentFiles/any/any/Fonts/Lato-ThinItalic.ttf",
+        "contentFiles/any/any/Fonts/LiberationMono-Bold.ttf",
+        "contentFiles/any/any/Fonts/LiberationMono-BoldItalic.ttf",
+        "contentFiles/any/any/Fonts/LiberationMono-Italic.ttf",
+        "contentFiles/any/any/Fonts/LiberationMono-Regular.ttf",
+        "contentFiles/any/any/Fonts/LiberationSans-Bold.ttf",
+        "contentFiles/any/any/Fonts/LiberationSans-BoldItalic.ttf",
+        "contentFiles/any/any/Fonts/LiberationSans-Italic.ttf",
+        "contentFiles/any/any/Fonts/LiberationSans-Regular.ttf",
+        "contentFiles/any/any/Fonts/LiberationSansNarrow-Bold.ttf",
+        "contentFiles/any/any/Fonts/LiberationSansNarrow-BoldItalic.ttf",
+        "contentFiles/any/any/Fonts/LiberationSansNarrow-Italic.ttf",
+        "contentFiles/any/any/Fonts/LiberationSansNarrow-Regular.ttf",
+        "contentFiles/any/any/Fonts/LiberationSerif-Bold.ttf",
+        "contentFiles/any/any/Fonts/LiberationSerif-BoldItalic.ttf",
+        "contentFiles/any/any/Fonts/LiberationSerif-Italic.ttf",
+        "contentFiles/any/any/Fonts/LiberationSerif-Regular.ttf",
+        "contentFiles/any/any/Fonts/Merriweather-Black.ttf",
+        "contentFiles/any/any/Fonts/Merriweather-BlackItalic.ttf",
+        "contentFiles/any/any/Fonts/Merriweather-Bold.ttf",
+        "contentFiles/any/any/Fonts/Merriweather-BoldItalic.ttf",
+        "contentFiles/any/any/Fonts/Merriweather-Italic.ttf",
+        "contentFiles/any/any/Fonts/Merriweather-Light.ttf",
+        "contentFiles/any/any/Fonts/Merriweather-LightItalic.ttf",
+        "contentFiles/any/any/Fonts/Merriweather-Regular.ttf",
+        "contentFiles/any/any/Fonts/MerriweatherSans-Italic-VariableFont_wght.ttf",
+        "contentFiles/any/any/Fonts/MerriweatherSans-VariableFont_wght.ttf",
+        "contentFiles/any/any/Fonts/Montserrat-Italic-VariableFont_wght.ttf",
+        "contentFiles/any/any/Fonts/Montserrat-VariableFont_wght.ttf",
+        "contentFiles/any/any/Fonts/NotoSans-Italic-VariableFont_wdth,wght.ttf",
+        "contentFiles/any/any/Fonts/NotoSans-VariableFont_wdth,wght.ttf",
+        "contentFiles/any/any/Fonts/NotoSansJP-Regular.ttf",
+        "contentFiles/any/any/Fonts/NotoSansKR-Regular.ttf",
+        "contentFiles/any/any/Fonts/NotoSansSC-Regular.ttf",
+        "contentFiles/any/any/Fonts/NotoSansSymbols2-Regular.ttf",
+        "contentFiles/any/any/Fonts/NotoSansTC-Regular.ttf",
+        "contentFiles/any/any/Fonts/Nunito-Italic-VariableFont_wght.ttf",
+        "contentFiles/any/any/Fonts/Nunito-VariableFont_wght.ttf",
+        "contentFiles/any/any/Fonts/OpenSans-Italic-VariableFont_wdth,wght.ttf",
+        "contentFiles/any/any/Fonts/OpenSans-VariableFont_wdth,wght.ttf",
+        "contentFiles/any/any/Fonts/Oswald-VariableFont_wght.ttf",
+        "contentFiles/any/any/Fonts/PTSans-Bold.ttf",
+        "contentFiles/any/any/Fonts/PTSans-BoldItalic.ttf",
+        "contentFiles/any/any/Fonts/PTSans-Italic.ttf",
+        "contentFiles/any/any/Fonts/PTSans-Regular.ttf",
+        "contentFiles/any/any/Fonts/Pacifico-Regular.ttf",
+        "contentFiles/any/any/Fonts/Prompt-Black.ttf",
+        "contentFiles/any/any/Fonts/Prompt-BlackItalic.ttf",
+        "contentFiles/any/any/Fonts/Prompt-Bold.ttf",
+        "contentFiles/any/any/Fonts/Prompt-BoldItalic.ttf",
+        "contentFiles/any/any/Fonts/Prompt-ExtraBold.ttf",
+        "contentFiles/any/any/Fonts/Prompt-ExtraBoldItalic.ttf",
+        "contentFiles/any/any/Fonts/Prompt-ExtraLight.ttf",
+        "contentFiles/any/any/Fonts/Prompt-ExtraLightItalic.ttf",
+        "contentFiles/any/any/Fonts/Prompt-Italic.ttf",
+        "contentFiles/any/any/Fonts/Prompt-Light.ttf",
+        "contentFiles/any/any/Fonts/Prompt-LightItalic.ttf",
+        "contentFiles/any/any/Fonts/Prompt-Medium.ttf",
+        "contentFiles/any/any/Fonts/Prompt-MediumItalic.ttf",
+        "contentFiles/any/any/Fonts/Prompt-Regular.ttf",
+        "contentFiles/any/any/Fonts/Prompt-SemiBold.ttf",
+        "contentFiles/any/any/Fonts/Prompt-SemiBoldItalic.ttf",
+        "contentFiles/any/any/Fonts/Prompt-Thin.ttf",
+        "contentFiles/any/any/Fonts/Prompt-ThinItalic.ttf",
+        "contentFiles/any/any/Fonts/Raleway-Italic-VariableFont_wght.ttf",
+        "contentFiles/any/any/Fonts/Raleway-VariableFont_wght.ttf",
+        "contentFiles/any/any/Fonts/Roboto-Black.ttf",
+        "contentFiles/any/any/Fonts/Roboto-BlackItalic.ttf",
+        "contentFiles/any/any/Fonts/Roboto-Bold.ttf",
+        "contentFiles/any/any/Fonts/Roboto-BoldItalic.ttf",
+        "contentFiles/any/any/Fonts/Roboto-Italic.ttf",
+        "contentFiles/any/any/Fonts/Roboto-Light.ttf",
+        "contentFiles/any/any/Fonts/Roboto-LightItalic.ttf",
+        "contentFiles/any/any/Fonts/Roboto-Medium.ttf",
+        "contentFiles/any/any/Fonts/Roboto-MediumItalic.ttf",
+        "contentFiles/any/any/Fonts/Roboto-Regular.ttf",
+        "contentFiles/any/any/Fonts/Roboto-Thin.ttf",
+        "contentFiles/any/any/Fonts/Roboto-ThinItalic.ttf",
+        "contentFiles/any/any/Fonts/Slabo27px-Regular.ttf",
+        "contentFiles/any/any/Fonts/SourceSans3-Italic-VariableFont_wght.ttf",
+        "contentFiles/any/any/Fonts/SourceSans3-VariableFont_wght.ttf",
+        "contentFiles/any/any/Fonts/WorkSans-Italic-VariableFont_wght.ttf",
+        "contentFiles/any/any/Fonts/WorkSans-VariableFont_wght.ttf",
+        "contentFiles/any/any/Fonts/licenses.txt",
         "contentFiles/any/any/txtextcontrol.server.license",
         "lib/net8.0/TXBarcode.dll",
-        "lib/net8.0/TXDocumentServer.Web.DocumentViewer.dll",
-        "lib/net8.0/TXDocumentServer.dll",
+        "lib/net8.0/TXDocumentServer.Core.dll",
         "lib/net8.0/TXDrawing.dll",
-        "lib/net8.0/TXTextControl.Server.dll",
-        "lib/net8.0/TXTextControl.dll",
+        "lib/net8.0/TXSVGResources.dll",
+        "lib/net8.0/TXTextControl.Core.dll",
+        "lib/net8.0/TXTextControl.Server.Core.dll",
         "lib/net8.0/de/TXBarcode.resources.dll",
-        "lib/net8.0/de/TXDocumentServer.resources.dll",
+        "lib/net8.0/de/TXDocumentServer.Core.resources.dll",
         "lib/net8.0/de/TXDrawing.resources.dll",
-        "lib/net8.0/de/TXTextControl.resources.dll",
-        "lib/net8.0/txpdf.dll",
-        "runtimes/win-x64/native/tx33.dll",
-        "runtimes/win-x64/native/tx33_css.dll",
-        "runtimes/win-x64/native/tx33_doc.dll",
-        "runtimes/win-x64/native/tx33_dox.dll",
-        "runtimes/win-x64/native/tx33_htm.dll",
-        "runtimes/win-x64/native/tx33_ic.dll",
-        "runtimes/win-x64/native/tx33_pdf.dll",
-        "runtimes/win-x64/native/tx33_rtf.dll",
-        "runtimes/win-x64/native/tx33_tls.dll",
-        "runtimes/win-x64/native/tx33_xlx.dll",
-        "runtimes/win-x64/native/tx33_xml.dll",
+        "lib/net8.0/de/TXTextControl.Core.resources.dll",
+        "runtimes/linux-x64/native/tx33_css.so",
+        "runtimes/linux-x64/native/tx33_dox.so",
+        "runtimes/linux-x64/native/tx33_htm.so",
+        "runtimes/linux-x64/native/tx33_ic.so",
+        "runtimes/linux-x64/native/tx33_pdf.so",
+        "runtimes/linux-x64/native/tx33_pdfdata.so",
+        "runtimes/linux-x64/native/tx33_xlx.so",
+        "runtimes/linux-x64/native/tx33core.so",
+        "runtimes/linux-x64/native/tx33core_tls.so",
+        "runtimes/linux-x64/native/txdomprs.so",
+        "runtimes/linux-x64/native/txfntmgr.so",
+        "runtimes/linux-x64/native/txsvggen.so",
+        "runtimes/linux-x64/native/txwndmgr.so",
+        "runtimes/win-x64/native/tx33_pdfdata.dll",
+        "runtimes/win-x64/native/tx33core.dll",
+        "runtimes/win-x64/native/tx33core_css.dll",
+        "runtimes/win-x64/native/tx33core_dox.dll",
+        "runtimes/win-x64/native/tx33core_htm.dll",
+        "runtimes/win-x64/native/tx33core_ic.dll",
+        "runtimes/win-x64/native/tx33core_pdf.dll",
+        "runtimes/win-x64/native/tx33core_tls.dll",
+        "runtimes/win-x64/native/tx33core_xlx.dll",
         "runtimes/win-x64/native/txdomprs.dll",
+        "runtimes/win-x64/native/txfntmgr.dll",
         "runtimes/win-x64/native/txsvggen.dll",
-        "runtimes/win-x86/native/tx33.dll",
-        "runtimes/win-x86/native/tx33_css.dll",
-        "runtimes/win-x86/native/tx33_doc.dll",
-        "runtimes/win-x86/native/tx33_dox.dll",
-        "runtimes/win-x86/native/tx33_htm.dll",
-        "runtimes/win-x86/native/tx33_ic.dll",
-        "runtimes/win-x86/native/tx33_pdf.dll",
-        "runtimes/win-x86/native/tx33_rtf.dll",
-        "runtimes/win-x86/native/tx33_tls.dll",
-        "runtimes/win-x86/native/tx33_xlx.dll",
-        "runtimes/win-x86/native/tx33_xml.dll",
-        "runtimes/win-x86/native/txdomprs.dll",
-        "runtimes/win-x86/native/txsvggen.dll",
+        "runtimes/win-x64/native/txwndmgr.dll",
         "tools/VisualStudioToolsManifest.xml",
         "tx33.png",
-        "txtextcontrol.textcontrol.asp.sdk.33.0.1.nupkg.sha512",
-        "txtextcontrol.textcontrol.asp.sdk.nuspec"
+        "txtextcontrol.textcontrol.core.sdk.33.0.1.nupkg.sha512",
+        "txtextcontrol.textcontrol.core.sdk.nuspec"
       ]
     },
     "TXTextControl.Web.DocumentViewer/33.1.0": {
@@ -3273,7 +3848,7 @@
   },
   "projectFileDependencyGroups": {
     "net8.0": [
-      "TXTextControl.TextControl.ASP.SDK >= 33.0.1",
+      "TXTextControl.TextControl.Core.SDK >= 33.0.1",
       "TXTextControl.Web.DocumentViewer >= 33.1.0"
     ]
   },
@@ -3328,7 +3903,7 @@
       "net8.0": {
         "targetAlias": "net8.0",
         "dependencies": {
-          "TXTextControl.TextControl.ASP.SDK": {
+          "TXTextControl.TextControl.Core.SDK": {
             "target": "Package",
             "version": "[33.0.1, )"
           },

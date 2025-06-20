@@ -51,7 +51,7 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
-            "TXTextControl.TextControl.ASP.SDK": {
+            "TXTextControl.TextControl.Core.SDK": {
               "target": "Package",
               "version": "[33.0.1, )"
             },

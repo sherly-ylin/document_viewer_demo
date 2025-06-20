@@ -1,9 +1,8 @@
 using document_viewer_demo.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
-// using tx_aspnet_core_viewer.Models;
 
-namespace tx_aspnet_core_viewer.Controllers
+namespace document_viewer_demo.Controllers
 {
     public class HomeController : Controller
     {
@@ -24,10 +23,5 @@ namespace tx_aspnet_core_viewer.Controllers
             return View();
         }
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
     }
 }
