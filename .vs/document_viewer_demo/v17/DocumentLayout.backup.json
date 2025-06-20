@@ -1,0 +1,58 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\ylin\\SalesChain Save\\2025\\Document Generation Process\\Prototype\\document_viewer_demo\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{E2527EBD-28A9-457A-A811-753730CD332A}|document_viewer_demo\\document_viewer_demo.csproj|c:\\users\\ylin\\saleschain save\\2025\\document generation process\\prototype\\document_viewer_demo\\document_viewer_demo\\views\\home\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{E2527EBD-28A9-457A-A811-753730CD332A}|document_viewer_demo\\document_viewer_demo.csproj|solutionrelative:document_viewer_demo\\views\\home\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2527EBD-28A9-457A-A811-753730CD332A}|document_viewer_demo\\document_viewer_demo.csproj|c:\\users\\ylin\\saleschain save\\2025\\document generation process\\prototype\\document_viewer_demo\\document_viewer_demo\\controllers\\homecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2527EBD-28A9-457A-A811-753730CD332A}|document_viewer_demo\\document_viewer_demo.csproj|solutionrelative:document_viewer_demo\\controllers\\homecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 152,
+          "SelectedChildIndex": 2,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{cce594b6-0c39-4442-ba28-10c64ac7e89f}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "HomeController.cs",
+              "DocumentMoniker": "C:\\Users\\ylin\\SalesChain Save\\2025\\Document Generation Process\\Prototype\\document_viewer_demo\\document_viewer_demo\\Controllers\\HomeController.cs",
+              "RelativeDocumentMoniker": "document_viewer_demo\\Controllers\\HomeController.cs",
+              "ToolTip": "C:\\Users\\ylin\\SalesChain Save\\2025\\Document Generation Process\\Prototype\\document_viewer_demo\\document_viewer_demo\\Controllers\\HomeController.cs",
+              "RelativeToolTip": "document_viewer_demo\\Controllers\\HomeController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAgAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-20T13:03:37.529Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Index.cshtml",
+              "DocumentMoniker": "C:\\Users\\ylin\\SalesChain Save\\2025\\Document Generation Process\\Prototype\\document_viewer_demo\\document_viewer_demo\\Views\\Home\\Index.cshtml",
+              "RelativeDocumentMoniker": "document_viewer_demo\\Views\\Home\\Index.cshtml",
+              "ToolTip": "C:\\Users\\ylin\\SalesChain Save\\2025\\Document Generation Process\\Prototype\\document_viewer_demo\\document_viewer_demo\\Views\\Home\\Index.cshtml",
+              "RelativeToolTip": "document_viewer_demo\\Views\\Home\\Index.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAAGAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-06-20T13:00:36.256Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
