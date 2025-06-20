@@ -1,5 +1,6 @@
+using TXTextControl.Web.MVC.DocumentViewer;
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Services.AddControllers();
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
@@ -15,6 +16,11 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
+
+app.UseRouting();
+app.UseAntiforgery();
+app.UseTXDocumentViewer();
 
 app.UseRouting();
 
