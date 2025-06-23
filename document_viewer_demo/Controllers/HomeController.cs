@@ -24,7 +24,7 @@ namespace document_viewer_demo.Controllers
             {
                 // Load template, merge data, and get the merged document
                 // string mergedDocumentBase64 = LoadTemplateAndMergeData();
-                string mergedDocumentBase64 = LoadTemplateAndMergeMultipleOrders(new List<int> { 7261, 7262, 7264});
+                string mergedDocumentBase64 = LoadTemplateAndMergeMultipleOrders(new List<int> { 7261, 7262, 7264 });
 
                 ViewBag.HasDocument = true;
                 ViewBag.DocumentData = mergedDocumentBase64;
@@ -40,14 +40,14 @@ namespace document_viewer_demo.Controllers
         }
         private string LoadTemplateAndMergeMultipleOrders(List<int> orderIds)
         {
-            Console.WriteLine("Merging multiple orders: " + string.Join(", ", orderIds));
+            Console.WriteLine("=== Merging multiple orders: " + string.Join(", ", orderIds));
             using (ServerTextControl masterTx = new ServerTextControl())
             {
                 masterTx.Create();
                 bool isFirstDoc = true;
-                foreach (var orderId in orderIds)
+                for (int i = 0; i < orderIds.Count; i++)
                 {
-                    Console.WriteLine("Processing OrderId: " + orderId);
+                    Console.WriteLine("Processing OrderId: " + orderIds[i]);
                     using (ServerTextControl tx = new ServerTextControl())
                     {
                         tx.Create();
@@ -60,9 +60,10 @@ namespace document_viewer_demo.Controllers
                         };
                         tx.Load("Documents/template_order.docx", StreamType.WordprocessingML, loadSettings);
 
-                        SNOrder dbOrder = GetOrderFromDb(orderId);
+                        SNOrder dbOrder = GetOrderFromDb(orderIds[i]);
+                        Console.WriteLine(JsonConvert.SerializeObject(dbOrder));
 
-                        using (MailMerge mailMerge = new MailMerge { TextComponent = masterTx })
+                        using (MailMerge mailMerge = new MailMerge { TextComponent = tx })
                         {
                             mailMerge.FormFieldMergeType = FormFieldMergeType.None;
                             mailMerge.MergeObject(dbOrder);
@@ -74,15 +75,20 @@ namespace document_viewer_demo.Controllers
                         if (isFirstDoc)
                         {
                             masterTx.Load(bytes, BinaryStreamType.InternalUnicodeFormat);
+                            // PageNumberField pageNumberField = new PageNumberField();
+                            // masterTx.ApplicationFields.Add(pageNumberField);
                             isFirstDoc = false;
                         }
                         else
                         {
                             Console.WriteLine("Appending page break");
                             masterTx.Append("\f", StringStreamType.PlainText, AppendSettings.None);
-                            Console.WriteLine("Appending document for OrderId: " + orderId);
+                            Console.WriteLine("Appending document for OrderId: " + orderIds[i]);
                             masterTx.Append(bytes, BinaryStreamType.InternalUnicodeFormat, AppendSettings.None);
                         }
+                        // TXTextControl.PageCollection pages = masterTx.GetPages();
+
+                        // Console.WriteLine("Merged document now has " + pages.Count + " pages.");
                     }
                 }
 
@@ -179,7 +185,7 @@ namespace document_viewer_demo.Controllers
                             {
                                 OrderLineID = Convert.ToInt32(itemRow["OrderLineID"]),
                                 BundleID = Convert.ToInt32(itemRow["BundleID"]),
-                                Model = itemRow["Model"].ToString(),
+                                Model = itemRow["Model"].ToString().TrimEnd(),
                                 Quantity = Convert.ToInt32(itemRow["Quantity"]),
                                 SellPrice = Convert.ToDecimal(itemRow["SellPrice"]),
                                 LineTotal = Convert.ToDecimal(itemRow["LineTotal"])
@@ -200,45 +206,121 @@ namespace document_viewer_demo.Controllers
             return order;
         }
 
-        // Alternative method for getting document as PDF
-        public IActionResult GetDocumentAsPdf(int orderId = 7262)
+        public IActionResult DownloadDocumentAsPdf()
         {
             try
             {
-                using (ServerTextControl tx = new ServerTextControl())
-                {
-                    tx.Create();
+                string mergedDocumentBase64 = LoadTemplateAndMergeMultipleOrders(new List<int> { 7261, 7262, 7264 });
+                byte[] documentBytes = Convert.FromBase64String(mergedDocumentBase64);
 
-                    var loadSettings = new LoadSettings
-                    {
-                        ApplicationFieldFormat = ApplicationFieldFormat.MSWord,
-                        LoadSubTextParts = true
-                    };
+                byte[] pdfBytes = ConvertToPdf(documentBytes);
 
-                    tx.Load("Documents/template_order.docx", StreamType.WordprocessingML, loadSettings);
-
-                    SNOrder dbOrder = GetOrderFromDb(orderId);
-
-                    using (MailMerge mailMerge = new MailMerge { TextComponent = tx })
-                    {
-                        mailMerge.FormFieldMergeType = FormFieldMergeType.None;
-                        mailMerge.MergeObject(dbOrder);
-                    }
-
-                    // Export as PDF
-                    byte[] pdfBytes;
-                    tx.Save(out pdfBytes, BinaryStreamType.AdobePDF);
-
-                    return File(pdfBytes, "application/pdf", $"Order_{orderId}.pdf");
-                }
+                string fileName = $"merged_orders_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                return File(pdfBytes, "application/pdf", fileName);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error generating PDF");
-                return BadRequest("Error generating PDF: " + ex.Message);
+                _logger.LogError(ex, "Error downloading PDF");
+                return StatusCode(500, "Error generating PDF");
+            }
+        }
+        private byte[] ConvertToPdf(byte[] documentBytes)
+        {
+            using (ServerTextControl tx = new ServerTextControl())
+            {
+                tx.Create();
+                tx.Load(documentBytes, BinaryStreamType.InternalUnicodeFormat);
+
+                byte[] pdfBytes;
+                tx.Save(out pdfBytes, BinaryStreamType.AdobePDF);
+                return pdfBytes;
             }
         }
 
+        public IActionResult DownloadSelectedPages(int[] pageNumbers)
+        {
+            try
+            {   
+                Console.WriteLine("Selected page numbers: " + string.Join(", ", pageNumbers));
+                if (pageNumbers == null || pageNumbers.Length == 0)
+                {
+                    return BadRequest("No pages selected");
+                }
+
+                // Recreate the merged document (you might want to cache this in a real application)
+                string mergedDocumentBase64 = LoadTemplateAndMergeMultipleOrders(new List<int> { 7261, 7262, 7264 });
+                byte[] documentBytes = Convert.FromBase64String(mergedDocumentBase64);
+                Console.WriteLine("Loaded merged document with " + documentBytes.Length + " bytes");
+                Console.WriteLine("Extracting selected pages: " + string.Join(", ", pageNumbers));
+                // Extract selected pages
+                byte[] selectedPagesBytes = ExtractSelectedPages(documentBytes, pageNumbers);
+
+                // Convert to PDF for download
+                byte[] pdfBytes = ConvertToPdf(selectedPagesBytes);
+
+                string fileName = $"selected_pages_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                return File(pdfBytes, "application/pdf", fileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error downloading selected pages");
+                return StatusCode(500, "Error processing selected pages");
+            }
+        }
+        private byte[] ExtractSelectedPages(byte[] documentBytes, int[] pageNumbers)
+        {
+            using (ServerTextControl sourceTx = new ServerTextControl())
+            {
+                sourceTx.Create();
+                sourceTx.Load(documentBytes, BinaryStreamType.InternalUnicodeFormat);
+
+                using (ServerTextControl targetTx = new ServerTextControl())
+                {
+                    targetTx.Create();
+
+                    // Sort page numbers to maintain order
+                    Array.Sort(pageNumbers);
+
+                    bool isFirstPage = true;
+                    var pages = sourceTx.GetPages();
+                    Console.WriteLine("Total pages in document: " + pages.Count);
+                    foreach (int pageNumber in pageNumbers)
+                    {
+                        // Validate page number
+                        if (pageNumber < 1 || pageNumber > pages.Count)
+                        {
+                            continue; // Skip invalid page numbers
+                        }
+
+                        // Get the page content
+                        var page = pages.GetItem(pageNumber - 1); // Pages are 0-indexed
+                        Console.WriteLine($"Extracting page {pageNumber}: Start={page.Start}, Length={page.Length}");
+                        // Select the entire page
+                        sourceTx.Select(page.Start, page.Length);
+
+                        // Copy the selected content
+                        byte[] pageContent;
+                        sourceTx.Selection.Save(out pageContent, BinaryStreamType.InternalUnicodeFormat);
+                        if (isFirstPage)
+                        {
+                            targetTx.Load(pageContent, BinaryStreamType.InternalUnicodeFormat);
+                            isFirstPage = false;
+                        }
+                        else
+                        {
+                            // Add page break and append content
+                            // targetTx.Append("\f", StringStreamType.PlainText, AppendSettings.None);
+                            targetTx.Append(pageContent, BinaryStreamType.InternalUnicodeFormat, AppendSettings.None);
+                        }
+                    }
+
+                    // Save the extracted pages
+                    byte[] result;
+                    targetTx.Save(out result, BinaryStreamType.InternalUnicodeFormat);
+                    return result;
+                }
+            }
+        }
         public IActionResult Privacy()
         {
             return View();
