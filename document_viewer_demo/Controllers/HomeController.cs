@@ -282,27 +282,23 @@ namespace document_viewer_demo.Controllers
                     Array.Sort(pageNumbers);
                     var pages = sourceTx.GetPages();
                     Console.WriteLine("Total pages in document: " + pages.Count);
-                    
+
+                    var currPosition = 0;
                     foreach (int pageNumber in pageNumbers)
                     {
-                        // Validate page number
                         if (pageNumber < 1 || pageNumber > pages.Count)
                         {
-                            continue; // Skip invalid page numbers
+                            continue;
                         }
 
-                        // Get the page content
                         var page = pages.GetItem(pageNumber - 1); // Pages are 0-indexed
                         Console.WriteLine($"Extracting page {pageNumber}: Start={page.Start}, Length={page.Length}");
-                        // Select the entire page
-                        sourceTx.Select(page.Start - 1, page.Length);
-
-                        // Copy the selected content
+                        sourceTx.Select(currPosition, page.Length);
+                        currPosition += page.Length;
                         byte[] pageContent;
                         sourceTx.Selection.Save(out pageContent, BinaryStreamType.InternalUnicodeFormat);
                         Console.WriteLine($"Extracted page {pageNumber} content length: {pageContent.Length}");
-                        // Add page break and append content
-                        // targetTx.Append("\f", StringStreamType.PlainText, AppendSettings.None);
+
                         targetTx.Append(pageContent, BinaryStreamType.InternalUnicodeFormat, AppendSettings.None);
                     }
 
