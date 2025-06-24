@@ -24,7 +24,7 @@ namespace document_viewer_demo.Controllers
             {
                 // Load template, merge data, and get the merged document
                 // string mergedDocumentBase64 = LoadTemplateAndMergeData();
-                string mergedDocumentBase64 = LoadTemplateAndMergeMultipleOrders(new List<int> { 7261, 7262, 7264 });
+                string mergedDocumentBase64 = LoadTemplateAndMergeMultipleOrders(new List<int> { 7259, 7261, 7262, 7264, 7266 });
 
                 ViewBag.HasDocument = true;
                 ViewBag.DocumentData = mergedDocumentBase64;
@@ -248,7 +248,7 @@ namespace document_viewer_demo.Controllers
                 }
 
                 // Recreate the merged document (you might want to cache this in a real application)
-                string mergedDocumentBase64 = LoadTemplateAndMergeMultipleOrders(new List<int> { 7261, 7262, 7264 });
+                string mergedDocumentBase64 = LoadTemplateAndMergeMultipleOrders(new List<int> { 7259, 7261, 7262, 7264, 7266 });
                 byte[] documentBytes = Convert.FromBase64String(mergedDocumentBase64);
                 Console.WriteLine("Loaded merged document with " + documentBytes.Length + " bytes");
                 Console.WriteLine("Extracting selected pages: " + string.Join(", ", pageNumbers));
@@ -280,10 +280,9 @@ namespace document_viewer_demo.Controllers
 
                     // Sort page numbers to maintain order
                     Array.Sort(pageNumbers);
-
-                    bool isFirstPage = true;
                     var pages = sourceTx.GetPages();
                     Console.WriteLine("Total pages in document: " + pages.Count);
+                    
                     foreach (int pageNumber in pageNumbers)
                     {
                         // Validate page number
@@ -296,22 +295,15 @@ namespace document_viewer_demo.Controllers
                         var page = pages.GetItem(pageNumber - 1); // Pages are 0-indexed
                         Console.WriteLine($"Extracting page {pageNumber}: Start={page.Start}, Length={page.Length}");
                         // Select the entire page
-                        sourceTx.Select(page.Start, page.Length);
+                        sourceTx.Select(page.Start - 1, page.Length);
 
                         // Copy the selected content
                         byte[] pageContent;
                         sourceTx.Selection.Save(out pageContent, BinaryStreamType.InternalUnicodeFormat);
-                        if (isFirstPage)
-                        {
-                            targetTx.Load(pageContent, BinaryStreamType.InternalUnicodeFormat);
-                            isFirstPage = false;
-                        }
-                        else
-                        {
-                            // Add page break and append content
-                            // targetTx.Append("\f", StringStreamType.PlainText, AppendSettings.None);
-                            targetTx.Append(pageContent, BinaryStreamType.InternalUnicodeFormat, AppendSettings.None);
-                        }
+                        Console.WriteLine($"Extracted page {pageNumber} content length: {pageContent.Length}");
+                        // Add page break and append content
+                        // targetTx.Append("\f", StringStreamType.PlainText, AppendSettings.None);
+                        targetTx.Append(pageContent, BinaryStreamType.InternalUnicodeFormat, AppendSettings.None);
                     }
 
                     // Save the extracted pages

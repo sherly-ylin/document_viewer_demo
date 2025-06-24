@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/document_viewer_demo.styles.css" asp-append-version="true" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
     <header>
@@ -30,8 +31,8 @@
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
+    <div class="container m-3 w-100">
+        <main role="main" class="pb-3 w-100">
             @RenderBody()
         </main>
     </div>

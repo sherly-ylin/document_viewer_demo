@@ -5,155 +5,180 @@
     ViewData["Title"] = "Document Viewer Demo";
 }
 
-<div class="viewer-container">
-    <h2>Document Viewer</h2>
 
-    @if (ViewBag.HasDocument != null && ViewBag.HasDocument)
-    {
+
+
+@if (ViewBag.HasDocument != null && ViewBag.HasDocument)
+{
+<div class="page-container">
+    <div class="viewer-container">
+        @* <h2>Document Viewer</h2> *@
+
         <div class="viewer">
             @Html.TXTextControl().DocumentViewer(settings => {
-                settings.DocumentData = ViewBag.DocumentData;
-                settings.Dock = DocumentViewerSettings.DockStyle.Fill;
-                settings.ShowThumbnailPane = true;
-                settings.ToolbarDocked = true;
-                settings.IsSelectionActivated = true;
-            }).Render()
+            settings.DocumentData = ViewBag.DocumentData;
+            settings.Dock = DocumentViewerSettings.DockStyle.Fill;
+            settings.ShowThumbnailPane = true;
+            settings.ToolbarDocked = true;
+            settings.IsSelectionActivated = true;
+        }).Render()
         </div>
-        
-        <div class="mt-3">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="page-selection-panel">
-                        <h5>Page Selection</h5>
-                        <div class="form-group">
-                            <label for="pageNumbers">Select pages to download (comma-separated):</label>
-                            <input type="text" id="pageNumbers" class="form-control" placeholder="e.g., 1,3,5 or 1-3,5">
-                            <small class="form-text text-muted">Enter individual pages (1,2,3) or ranges (1-3,5-7)</small>
-                        </div>
-                        <button type="button" class="btn btn-success" onclick="downloadSelectedPages()">
-                            <i class="fas fa-download"></i> Download Selected Pages
-                        </button>
-                    </div>
+        <div class="download-options">
+            <div class="page-selection-panel">
+                <h5>Page Selection</h5>
+                <div class="form-group">
+                    <label for="pageNumbers">Select pages to download (comma-separated):</label>
+                    <input type="text" id="pageNumbers" class="form-control" placeholder="e.g., 1,3,5 or 1-3,5">
+                    <small class="form-text text-muted">Enter individual pages (1,2,3) or ranges (1-3,5-7)</small>
                 </div>
-                <div class="col-md-6">
-                    <div class="download-options">
-                        <h5>Download Options</h5>
-                        <a href="@Url.Action("DownloadDocumentAsPdf", "Home")" class="btn btn-primary" target="_blank">
-                            <i class="fas fa-download"></i> Download Full Document as PDF
-                        </a>
-                    </div>
-                </div>
+                <button type="button" class="btn btn-success" onclick="downloadSelectedPages()">
+                    <i class="fas fa-download"></i> Download Selected Pages
+                </button>
             </div>
+            @* <div class="download-options">
+                <h5>Download Options</h5>
+                <a href="@Url.Action("DownloadDocumentAsPdf", "Home")" class="btn btn-primary" target="_blank">
+                    <i class="fas fa-download"></i> Download Full Document as PDF
+                </a>
+            </div> *@
+        
         </div>
-    }
-    else if (ViewBag.ErrorMessage != null)
-    {
-        <div class="alert alert-danger" role="alert">
-            <h4 class="alert-heading">Error Loading Document</h4>
-            <p>@ViewBag.ErrorMessage</p>
-        </div>
-    }
-    else
-    {
-        <div class="alert alert-info" role="alert">
-            <p>No document available to display.</p>
-        </div>
-    }
+    </div>
 </div>
 
-<script>
-function downloadSelectedPages() {
-    const pageInput = document.getElementById('pageNumbers').value.trim();
-    console.log('Page input:', pageInput);
-    if (!pageInput) {
-        alert('Please enter page numbers to download.');
-        return;
-    }
-    
-    // Parse the page numbers/ranges
-    const pageNumbers = parsePageNumbers(pageInput);
-    console.log('Parsed page numbers:', pageNumbers);
-    if (pageNumbers.length === 0) {
-        alert('Please enter valid page numbers.');
-        return;
-    }
-    
-    // Create a form to submit the page numbers
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = '@Url.Action("DownloadSelectedPages", "Home")';
-    form.target = '_blank';
-    
-    // Add CSRF token if available
-    const token = document.querySelector('input[name="__RequestVerificationToken"]');
-    if (token) {
-        const tokenInput = document.createElement('input');
-        tokenInput.type = 'hidden';
-        tokenInput.name = '__RequestVerificationToken';
-        tokenInput.value = token.value;
-        form.appendChild(tokenInput);
-    }
-    
-    // Add page numbers as hidden inputs
-    pageNumbers.forEach(function(pageNum) {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'pageNumbers';
-        input.value = pageNum;
-        form.appendChild(input);
-    });
-    
-    document.body.appendChild(form);
-    form.submit();
-    document.body.removeChild(form);
+}
+else if (ViewBag.ErrorMessage != null)
+{
+    <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Error Loading Document</h4>
+        <p>@ViewBag.ErrorMessage</p>
+    </div>
+}
+else
+{
+    <div class="alert alert-info" role="alert">
+        <p>No document available to display.</p>
+    </div>
 }
 
-function parsePageNumbers(input) {
-    const pageNumbers = [];
-    const parts = input.split(',');
-    
-    parts.forEach(function(part) {
-        part = part.trim();
-        
-        if (part.includes('-')) {
-            // Handle ranges like "1-3"
-            const range = part.split('-');
-            if (range.length === 2) {
-                const start = parseInt(range[0].trim());
-                const end = parseInt(range[1].trim());
-                
-                if (!isNaN(start) && !isNaN(end) && start <= end) {
-                    for (let i = start; i <= end; i++) {
-                        if (pageNumbers.indexOf(i) === -1) {
-                            pageNumbers.push(i);
+<script>
+
+    function downloadSelectedPages() {
+        const pageInput = document.getElementById('pageNumbers').value.trim();
+        console.log('Page input:', pageInput);
+        if (!pageInput) {
+            alert('Please enter page numbers to download.');
+            return;
+        }
+
+        // Parse the page numbers/ranges
+        const pageNumbers = parsePageNumbers(pageInput);
+        console.log('Parsed page numbers:', pageNumbers);
+        if (pageNumbers.length === 0) {
+            alert('Please enter valid page numbers.');
+            return;
+        }
+
+        // Create a form to submit the page numbers
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '@Url.Action("DownloadSelectedPages", "Home")';
+        form.target = '_blank';
+
+        // Add CSRF token if available
+        const token = document.querySelector('input[name="__RequestVerificationToken"]');
+        if (token) {
+            const tokenInput = document.createElement('input');
+            tokenInput.type = 'hidden';
+            tokenInput.name = '__RequestVerificationToken';
+            tokenInput.value = token.value;
+            form.appendChild(tokenInput);
+        }
+
+        // Add page numbers as hidden inputs
+        pageNumbers.forEach(function (pageNum) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'pageNumbers';
+            input.value = pageNum;
+            form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+    }
+    function getCurrentPage() {
+        var page = $(".thumb-pagenumber").val();
+        console.log('Current page: ' + page);
+        console.log('Current page: ' + $('#curPage').val());
+        @* const viewer = document.querySelector('.viewer');
+        if (viewer && viewer.TXTextControl) {
+            const page = viewer.TXTextControl.getCurrentPage();
+            console.log('Current page: ' + page);
+        } *@
+        return null;
+    }
+    function parsePageNumbers(input) {
+        const pageNumbers = [];
+        const parts = input.split(',');
+
+        parts.forEach(function (part) {
+            part = part.trim();
+
+            if (part.includes('-')) {
+                // Handle ranges like "1-3"
+                const range = part.split('-');
+                if (range.length === 2) {
+                    const start = parseInt(range[0].trim());
+                    const end = parseInt(range[1].trim());
+
+                    if (!isNaN(start) && !isNaN(end) && start <= end) {
+                        for (let i = start; i <= end; i++) {
+                            if (pageNumbers.indexOf(i) === -1) {
+                                pageNumbers.push(i);
+                            }
                         }
                     }
                 }
+            } else {
+                // Handle individual pages
+                const pageNum = parseInt(part);
+                if (!isNaN(pageNum) && pageNum > 0 && pageNumbers.indexOf(pageNum) === -1) {
+                    pageNumbers.push(pageNum);
+                }
             }
-        } else {
-            // Handle individual pages
-            const pageNum = parseInt(part);
-            if (!isNaN(pageNum) && pageNum > 0 && pageNumbers.indexOf(pageNum) === -1) {
-                pageNumbers.push(pageNum);
-            }
-        }
-    });
-    
-    return pageNumbers.sort(function(a, b) { return a - b; });
-}
+        });
+
+        return pageNumbers.sort(function (a, b) { return a - b; });
+    }
 </script>
 
 <style>
+    .page-container {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-evenly;
+        @* margin: 0 1em; *@
+        padding: 20px;
+        @* background-color: #e6eaee; *@
+        width: 90vw;
+    }
+
     .viewer-container {
-        padding: 1em;
-        border: 1px solid #333;
+        margin: 1em;
+        @* border: 1px solid #333; *@
     }
 
     .viewer {
         width: 100%;
         height: 70vh;
         max-height: max-content;
-        border: 1px solid #4677ff;
+        @* border: 1px solid #131c35; *@
+    }
+    #tx-documentViewer{
+        width: 100%;
+        height: 100%;
     }
 
     .alert {
@@ -163,25 +188,27 @@ function parsePageNumbers(input) {
     .btn {
         margin-right: 10px;
     }
-    
-    .page-selection-panel,
+
+
     .download-options {
         padding: 15px;
         border: 1px solid #ddd;
         border-radius: 5px;
         background-color: #f8f9fa;
+        width: 100% ;
+        margin-top: 1em;
     }
-    
+
     .page-selection-panel h5,
     .download-options h5 {
         color: #495057;
         margin-bottom: 15px;
     }
-    
+
     .form-group {
         margin-bottom: 15px;
     }
-    
+
     .form-control {
         margin-bottom: 5px;
     }
