@@ -12,6 +12,7 @@ namespace document_viewer_demo.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        List<int> orderIds = new List<int> { 7259, 7261, 7262, 7264, 7266 };
 
         // private List<int> pageLengths { get; set; } = new List<int>();
         public HomeController(ILogger<HomeController> logger)
@@ -23,7 +24,6 @@ namespace document_viewer_demo.Controllers
         {
             try
             {
-                var orderIds = new List<int> { 7259, 7261, 7262, 7264, 7266 };
                 string sessionKey = $"merged_document_{string.Join("_", orderIds)}";
                 Console.WriteLine("=====> Session Key: " + sessionKey);
                 // Try to get from session first
@@ -33,6 +33,7 @@ namespace document_viewer_demo.Controllers
                 {
                     _logger.LogInformation("Document not found in session, generating new document");
                     // Generate and store in session
+                    // mergedDocumentBase64 = LoadDocument("Documents/sample.docx", StreamType.WordprocessingML);
                     mergedDocumentBase64 = LoadTemplateAndMergeMultipleOrders(orderIds);
                     HttpContext.Session.SetString(sessionKey, mergedDocumentBase64);
                 }
@@ -55,6 +56,27 @@ namespace document_viewer_demo.Controllers
             return View();
         }
 
+        private string LoadDocument(string filePath, StreamType streamType)
+        {
+            using (ServerTextControl tx = new ServerTextControl())
+            {
+                tx.Create();
+
+                // Load the template
+                var loadSettings = new LoadSettings
+                {
+                    ApplicationFieldFormat = ApplicationFieldFormat.MSWord,
+                    LoadSubTextParts = true
+                };
+                tx.Load(filePath, streamType, loadSettings);
+                SectionCollection sections = tx.Sections;
+                Console.WriteLine("number of sections: " + sections.Count);
+
+                byte[] bytes;
+                tx.Save(out bytes, BinaryStreamType.InternalUnicodeFormat);
+                return Convert.ToBase64String(bytes);
+            }
+        }
         public IActionResult DownloadSelectedPages(int[] pageNumbers, string sessionKey)
         {
             try
@@ -126,7 +148,6 @@ namespace document_viewer_demo.Controllers
         // Helper method to clear session cache (useful for testing or manual refresh)
         public IActionResult ClearCache()
         {
-            var orderIds = new List<int> { 7261, 7262, 7264 };
             string sessionKey = $"merged_document_{string.Join("_", orderIds)}";
 
             HttpContext.Session.Remove(sessionKey);
@@ -154,15 +175,15 @@ namespace document_viewer_demo.Controllers
                     // Calculate page start positions: sum of lengths of previous pages + number of previous pages
                     var pageStartPositions = new List<int> { 0 };
                     int currPos = pageLengths[0];
-                    for (int i = 1; i < pageLengths.Count; i++)
+                    sourceTx.Append("\f", StringStreamType.PlainText, AppendSettings.None); // For calculation purposes
+
+                    for (int i = 1; i <= pageLengths.Count; i++)
                     {
-                        var indexPageBreak = sourceTx.Find("\f", pageStartPositions[i-1], FindOptions.MatchWholeWord);
+                        var indexPageBreak = sourceTx.Find("\f", pageStartPositions[i - 1], FindOptions.MatchWholeWord);
                         Console.WriteLine($"Page break found at index: {indexPageBreak}");
-                        pageStartPositions.Add(indexPageBreak+1);
-                        // currPos += indexPageBreak + 1;
+                        pageStartPositions.Add(indexPageBreak + 1);
                     }
 
-                    pageStartPositions.Add(currPos); // Placholder for bounds
 
                     Console.WriteLine("Total pages in document: " + pages.Count);
                     Console.WriteLine("Page lengths: " + string.Join(", ", pageLengths));
@@ -176,15 +197,24 @@ namespace document_viewer_demo.Controllers
                         }
 
                         var page = pages.GetItem(pageNumbers[i] - 1); // Pages are 0-indexed
-                        Console.WriteLine($"Extracting page {pageNumbers[i]}: Start={pageStartPositions[pageNumbers[i] - 1]}, End={pageStartPositions[pageNumbers[i]]- pageStartPositions[pageNumbers[i] - 1]-1}, Length={page.Length}");
+                        Console.WriteLine($"Extracting page {pageNumbers[i]}: Start={pageStartPositions[pageNumbers[i] - 1]}, End={pageStartPositions[pageNumbers[i]] - pageStartPositions[pageNumbers[i] - 1] - 1}, Length={page.Length}");
 
-                        sourceTx.Select(pageStartPositions[pageNumbers[i] - 1], pageStartPositions[pageNumbers[i]] - pageStartPositions[pageNumbers[i] - 1]-1);
+                        sourceTx.Select(pageStartPositions[pageNumbers[i] - 1], pageStartPositions[pageNumbers[i]] - pageStartPositions[pageNumbers[i] - 1]);
 
                         byte[] pageContent;
                         sourceTx.Selection.Save(out pageContent, BinaryStreamType.InternalUnicodeFormat);
-                        Console.WriteLine($"Extracted page {pageNumbers[i]} content length: {pageContent.Length}");
+                        Console.WriteLine($"Extracted page {pageNumbers[i]} content length: {pageStartPositions[pageNumbers[i]] - pageStartPositions[pageNumbers[i] - 1]}");
 
                         targetTx.Append(pageContent, BinaryStreamType.InternalUnicodeFormat, AppendSettings.None);
+                    }
+                    var index = targetTx.Find("\f", -1, FindOptions.Reverse);
+                    Console.WriteLine($"Selecttion complete == Page break found at index: {index}");
+                    if (index > 0)
+                    {
+                        // Clear the last page break if it exists
+                        targetTx.Select(index, 1);
+                        targetTx.Clear();
+                        Console.WriteLine("Cleared last char");
                     }
 
                     // Save the extracted pages
@@ -213,7 +243,6 @@ namespace document_viewer_demo.Controllers
             using (ServerTextControl masterTx = new ServerTextControl())
             {
                 masterTx.Create();
-                bool isFirstDoc = true;
 
                 for (int i = 0; i < orderIds.Count; i++)
                 {
@@ -242,20 +271,25 @@ namespace document_viewer_demo.Controllers
                         byte[] bytes;
                         tx.Save(out bytes, BinaryStreamType.InternalUnicodeFormat);
 
-                        if (isFirstDoc)
-                        {
-                            masterTx.Load(bytes, BinaryStreamType.InternalUnicodeFormat);
-                            isFirstDoc = false;
-                        }
-                        else
-                        {
-                            Console.WriteLine("Appending page break");
-                            masterTx.Append("\f", StringStreamType.PlainText, AppendSettings.None);
-                            Console.WriteLine("Appending document for OrderId: " + orderIds[i]);
-                            masterTx.Append(bytes, BinaryStreamType.InternalUnicodeFormat, AppendSettings.None);
-                        }
+                        // SectionCollection sections = masterTx.Sections;
+                        // Console.WriteLine("number of sections masterTX: " + sections.Count);
+
+                        Console.WriteLine("Appending document for OrderId: " + orderIds[i]);
+                        masterTx.Append(bytes, BinaryStreamType.InternalUnicodeFormat, AppendSettings.None);
+                        Console.WriteLine("Appending page break");
+                        masterTx.Append("\f", StringStreamType.PlainText, AppendSettings.None);
+
+
+                        // sections = masterTx.Sections;
+                        // Console.WriteLine("number of sections after appending: " + sections.Count);
+                        Console.WriteLine("number of pages: " + masterTx.Pages);
                     }
                 }
+
+                //Remove the last page break
+                var index = masterTx.Find("\f", -1, FindOptions.Reverse);
+                masterTx.Select(index, 1);
+                masterTx.Clear();
 
                 // Save the merged document to a byte array
                 byte[] documentBytes;

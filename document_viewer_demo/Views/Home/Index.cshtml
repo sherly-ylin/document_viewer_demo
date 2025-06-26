@@ -6,8 +6,6 @@
 }
 
 <div class="viewer-container">
-    <h2>Document Viewer</h2>
-
     @if (ViewBag.HasDocument != null && ViewBag.HasDocument)
     {
         <div class="document-info">
@@ -47,7 +45,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="col-md-6">
+                @* <div class="col-md-6">
                     <div class="download-options">
                         <h5><i class="fas fa-download"></i> Download Options</h5>
                         <div class="d-grid gap-2">
@@ -60,11 +58,10 @@
                             </small>
                         </div>
                     </div>
-                </div>
+                </div> *@
             </div>
         </div>
         
-        <!-- Hidden field to store session key -->
         <input type="hidden" id="documentSessionKey" value="@ViewBag.SessionKey" />
     }
     else if (ViewBag.ErrorMessage != null)
@@ -88,7 +85,6 @@
 
 
 <script>
-
     function downloadSelectedPages() {
         const pageInput = document.getElementById('pageNumbers').value.trim();
         console.log('Page input:', pageInput);
@@ -200,7 +196,7 @@
                 }
             }
         });
-
+        console.log('Parsed page numbers:', pageNumbers);
         return pageNumbers.sort(function (a, b) { return a - b; });
     }
 </script>
@@ -241,7 +237,7 @@
     }
 
 
-    .download-options {
+    .page-selection-panel,.alert .download-options {
         padding: 15px;
         border: 1px solid #ddd;
         border-radius: 5px;
