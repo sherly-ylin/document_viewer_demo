@@ -32,7 +32,7 @@
                 .Select(g => new OrderBundle
                 {
                     BundleID = g.Key,
-                    BundleLines = g.ToList(),
+                    OrderLines = g.ToList(),
                     BundleTotal = g.Sum(ol => ol.LineTotal)
                 })
                 .ToList();
@@ -41,7 +41,7 @@
     public class OrderBundle
     {
         public int BundleID { get; set; }
-        public List<OrderLine> BundleLines { get; set; } = new List<OrderLine>();
+        public List<OrderLine> OrderLines { get; set; } = new List<OrderLine>();
         public decimal BundleTotal { get; set; }
     }
     public class OrderLine

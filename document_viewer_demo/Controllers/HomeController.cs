@@ -45,6 +45,7 @@ namespace document_viewer_demo.Controllers
                 ViewBag.HasDocument = true;
                 ViewBag.DocumentData = mergedDocumentBase64;
                 ViewBag.SessionKey = sessionKey;
+                ViewBag.DocumentName = $"Merged_Orders_{DateTime.Now:yyyyMMdd_HHmmss}.docx";
             }
             catch (Exception ex)
             {
@@ -305,7 +306,7 @@ namespace document_viewer_demo.Controllers
         }
 
         // Keep your existing GetOrderFromDb method unchanged
-        public SNOrder GetOrderFromDb(int orderId)
+        public SNOrder GetOrderFromDb(int orderId, bool byBundle = false)
         {
             Console.WriteLine("Retrieving order info from database for OrderId: " + orderId);
             var order = new SNOrder();
@@ -318,43 +319,76 @@ namespace document_viewer_demo.Controllers
                 conn.Open();
                 try
                 {
-                    var query = @"SELECT * FROM SNOrder o 
+                    
+                    if (byBundle)
+                    {
+                        var query = @"SELECT * FROM SNOrder o 
                                 JOIN SNOrderLine ol on o.OrderId = ol.OrderId
                                 WHERE o.OrderId = @OrderId
                                 ORDER BY ol.BundleID, Model";
-                    var cmd = new Microsoft.Data.SqlClient.SqlCommand(query, conn);
+                        var cmd = new SqlCommand(query, conn);
 
-                    cmd.Parameters.AddWithValue("@OrderId", orderId);
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        resultTable.Load(reader);
-                        Console.WriteLine("Total results rows: " + resultTable.Rows.Count);
-                    }
-                    if (resultTable.Rows.Count > 0)
-                    {
-                        var row = resultTable.Rows[0];
-                        order.OrderID = Convert.ToInt32(row["OrderID"]);
-                        order.CustomerName = row["CustomerName"].ToString();
-                        order.BillingAddress = row["BillingAddress1"].ToString() + ", " +
-                            (string.IsNullOrEmpty(row["BillingAddress2"].ToString()) ? "" : row["BillingAddress2"].ToString() + ", ") +
-                            row["BillingCity"].ToString() + ", " +
-                            row["BillingState"].ToString() + " " +
-                            row["BillingPostalCode"].ToString();
-                        order.DTCreated = Convert.ToDateTime(row["DTCreated"]);
-
-                        foreach (DataRow itemRow in resultTable.Rows)
+                        cmd.Parameters.AddWithValue("@OrderId", orderId);
+                        using (var reader = cmd.ExecuteReader())
                         {
-                            order.OrderLines.Add(new OrderLine
+                            resultTable.Load(reader);
+                        }
+                    
+                        // For each distinct BundleID in resultTable
+                        var distinctBundleIds = resultTable.AsEnumerable()
+                            .Select(r => r.Field<int>("BundleID"))
+                            .Distinct();
+
+                        foreach (var bundleId in distinctBundleIds)
+                        {
+                            Console.WriteLine("Processing BundleID: " + bundleId);
+                            order.OrderBundles.Add(new OrderBundle
                             {
-                                OrderLineID = Convert.ToInt32(itemRow["OrderLineID"]),
-                                BundleID = Convert.ToInt32(itemRow["BundleID"]),
-                                Model = itemRow["Model"].ToString().TrimEnd(),
-                                Quantity = Convert.ToInt32(itemRow["Quantity"]),
-                                SellPrice = Convert.ToDecimal(itemRow["SellPrice"]),
-                                LineTotal = Convert.ToDecimal(itemRow["LineTotal"])
+                                BundleID = bundleId
                             });
                         }
                     }
+                    else
+                        {
+                            var query = @"SELECT * FROM SNOrder o 
+                                JOIN SNOrderLine ol on o.OrderId = ol.OrderId
+                                WHERE o.OrderId = @OrderId
+                                ORDER BY ol.BundleID, Model";
+                            var cmd = new SqlCommand(query, conn);
+
+                            cmd.Parameters.AddWithValue("@OrderId", orderId);
+                            using (var reader = cmd.ExecuteReader())
+                            {
+                                resultTable.Load(reader);
+                                Console.WriteLine("Total results rows: " + resultTable.Rows.Count);
+                            }
+                            if (resultTable.Rows.Count > 0)
+                            {
+                                var row = resultTable.Rows[0];
+                                order.OrderID = Convert.ToInt32(row["OrderID"]);
+                                order.CustomerName = row["CustomerName"].ToString();
+                                order.BillingAddress = row["BillingAddress1"].ToString() + ", " +
+                                    (string.IsNullOrEmpty(row["BillingAddress2"].ToString()) ? "" : row["BillingAddress2"].ToString() + ", ") +
+                                    row["BillingCity"].ToString() + ", " +
+                                    row["BillingState"].ToString() + " " +
+                                    row["BillingPostalCode"].ToString();
+                                order.DTCreated = Convert.ToDateTime(row["DTCreated"]);
+
+                                foreach (DataRow itemRow in resultTable.Rows)
+                                {
+                                    order.OrderLines.Add(new OrderLine
+                                    {
+                                        OrderLineID = Convert.ToInt32(itemRow["OrderLineID"]),
+                                        BundleID = Convert.ToInt32(itemRow["BundleID"]),
+                                        Model = itemRow["Model"].ToString().TrimEnd(),
+                                        Quantity = Convert.ToInt32(itemRow["Quantity"]),
+                                        SellPrice = Convert.ToDecimal(itemRow["SellPrice"]),
+                                        LineTotal = Convert.ToDecimal(itemRow["LineTotal"])
+                                    });
+                                }
+                            }
+                    }
+                    
                 }
                 catch (Exception ex)
                 {
