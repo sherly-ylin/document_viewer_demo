@@ -25,24 +25,16 @@
         public List<OrderLine> OrderLines { get; set; } = new List<OrderLine>();
         public decimal TotalSellPrice => OrderLines.Sum(item => item.LineTotal);
         public List<OrderBundle> OrderBundles { get; set; } = new List<OrderBundle>();
-        public void GroupOrderLinesByBundle()
-        {
-            OrderBundles = OrderLines
-                .GroupBy(ol => ol.BundleID)
-                .Select(g => new OrderBundle
-                {
-                    BundleID = g.Key,
-                    OrderLines = g.ToList(),
-                    BundleTotal = g.Sum(ol => ol.LineTotal)
-                })
-                .ToList();
-        }
+
     }
     public class OrderBundle
     {
         public int BundleID { get; set; }
+        public string CustomerName { get; set; }
+        public string ShippingAddress { get; set; }
+        public DateTime OrderDate { get; set; }
+        public decimal BundleTotal => OrderLines.Sum(i => i.LineTotal);
         public List<OrderLine> OrderLines { get; set; } = new List<OrderLine>();
-        public decimal BundleTotal { get; set; }
     }
     public class OrderLine
     {

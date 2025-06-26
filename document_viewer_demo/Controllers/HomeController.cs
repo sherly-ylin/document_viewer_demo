@@ -12,7 +12,10 @@ namespace document_viewer_demo.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-        List<int> orderIds = new List<int> { 7259, 7261, 7262, 7264, 7266 };
+        // List<int> orderIds = new List<int> { 7259, 7261, 7262, 7264, 7266 };
+        List<int> orderIds = new List<int> { 7262, 7264 };
+        // int bundleOrderId = 7262;
+        bool testBundle = true;
 
         // private List<int> pageLengths { get; set; } = new List<int>();
         public HomeController(ILogger<HomeController> logger)
@@ -25,17 +28,22 @@ namespace document_viewer_demo.Controllers
             try
             {
                 string sessionKey = $"merged_document_{string.Join("_", orderIds)}";
+
+
                 Console.WriteLine("=====> Session Key: " + sessionKey);
                 // Try to get from session first
-                string mergedDocumentBase64 = HttpContext.Session.GetString(sessionKey);
+                string generatedDocumentBase64 = HttpContext.Session.GetString(sessionKey);
 
-                if (string.IsNullOrEmpty(mergedDocumentBase64))
+                if (string.IsNullOrEmpty(generatedDocumentBase64))
                 {
                     _logger.LogInformation("Document not found in session, generating new document");
                     // Generate and store in session
-                    // mergedDocumentBase64 = LoadDocument("Documents/sample.docx", StreamType.WordprocessingML);
-                    mergedDocumentBase64 = LoadTemplateAndMergeMultipleOrders(orderIds);
-                    HttpContext.Session.SetString(sessionKey, mergedDocumentBase64);
+                    // generatedDocumentBase64 = LoadDocument("Documents/sample.docx", StreamType.WordprocessingML);
+
+                    generatedDocumentBase64 = LoadTemplateAndMergeMultipleOrders(orderIds);
+                    generatedDocumentBase64 = LoadTemplateAndMergeMultipleOrders(orderIds);
+
+                    HttpContext.Session.SetString(sessionKey, generatedDocumentBase64);
                 }
                 else
                 {
@@ -43,7 +51,7 @@ namespace document_viewer_demo.Controllers
                 }
 
                 ViewBag.HasDocument = true;
-                ViewBag.DocumentData = mergedDocumentBase64;
+                ViewBag.DocumentData = generatedDocumentBase64;
                 ViewBag.SessionKey = sessionKey;
                 ViewBag.DocumentName = $"Merged_Orders_{DateTime.Now:yyyyMMdd_HHmmss}.docx";
             }
@@ -93,15 +101,15 @@ namespace document_viewer_demo.Controllers
                 }
 
                 // Get the document from session
-                string mergedDocumentBase64 = HttpContext.Session.GetString(sessionKey);
-                if (string.IsNullOrEmpty(mergedDocumentBase64))
+                string generatedDocumentBase64 = HttpContext.Session.GetString(sessionKey);
+                if (string.IsNullOrEmpty(generatedDocumentBase64))
                 {
                     return BadRequest("Document no longer available in session. Please refresh the page to regenerate the document.");
                 }
 
                 _logger.LogInformation($"Downloading selected pages: {string.Join(", ", pageNumbers)}");
 
-                byte[] documentBytes = Convert.FromBase64String(mergedDocumentBase64);
+                byte[] documentBytes = Convert.FromBase64String(generatedDocumentBase64);
                 byte[] selectedPagesBytes = ExtractSelectedPages(documentBytes, pageNumbers);
                 byte[] pdfBytes = ConvertToPdf(selectedPagesBytes);
 
@@ -125,15 +133,15 @@ namespace document_viewer_demo.Controllers
                 }
 
                 // Get the document from session
-                string mergedDocumentBase64 = HttpContext.Session.GetString(sessionKey);
-                if (string.IsNullOrEmpty(mergedDocumentBase64))
+                string generatedDocumentBase64 = HttpContext.Session.GetString(sessionKey);
+                if (string.IsNullOrEmpty(generatedDocumentBase64))
                 {
                     return BadRequest("Document no longer available in session. Please refresh the page to regenerate the document.");
                 }
 
                 _logger.LogInformation("Downloading full document as PDF");
 
-                byte[] documentBytes = Convert.FromBase64String(mergedDocumentBase64);
+                byte[] documentBytes = Convert.FromBase64String(generatedDocumentBase64);
                 byte[] pdfBytes = ConvertToPdf(documentBytes);
 
                 string fileName = $"merged_orders_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
@@ -258,17 +266,27 @@ namespace document_viewer_demo.Controllers
                             ApplicationFieldFormat = ApplicationFieldFormat.MSWord,
                             LoadSubTextParts = true
                         };
-                        tx.Load("Documents/template_order.docx", StreamType.WordprocessingML, loadSettings);
 
-                        SNOrder dbOrder = GetOrderFromDb(orderIds[i]);
-                        Console.WriteLine(JsonConvert.SerializeObject(dbOrder));
+                        if (testBundle)
+                        {
+                            tx.Load("Documents/template_order_bundle.docx", StreamType.WordprocessingML, loadSettings);
 
-                        using (MailMerge mailMerge = new MailMerge { TextComponent = tx })
+                        }
+                        else
+                        {
+                            tx.Load("Documents/template_order.docx", StreamType.WordprocessingML, loadSettings);
+                        }
+
+                            SNOrder dbOrder = GetOrderFromDb(orderIds[i]);
+                            Console.WriteLine(JsonConvert.SerializeObject(dbOrder));
+                        if (testBundle) { }
+                        
+                            using (MailMerge mailMerge = new MailMerge { TextComponent = tx })
                         {
                             mailMerge.FormFieldMergeType = FormFieldMergeType.None;
                             mailMerge.MergeObject(dbOrder);
                         }
-
+                        
                         byte[] bytes;
                         tx.Save(out bytes, BinaryStreamType.InternalUnicodeFormat);
 
@@ -319,7 +337,7 @@ namespace document_viewer_demo.Controllers
                 conn.Open();
                 try
                 {
-                    
+
                     if (byBundle)
                     {
                         var query = @"SELECT * FROM SNOrder o 
@@ -333,7 +351,7 @@ namespace document_viewer_demo.Controllers
                         {
                             resultTable.Load(reader);
                         }
-                    
+
                         // For each distinct BundleID in resultTable
                         var distinctBundleIds = resultTable.AsEnumerable()
                             .Select(r => r.Field<int>("BundleID"))
@@ -349,46 +367,46 @@ namespace document_viewer_demo.Controllers
                         }
                     }
                     else
-                        {
-                            var query = @"SELECT * FROM SNOrder o 
+                    {
+                        var query = @"SELECT * FROM SNOrder o 
                                 JOIN SNOrderLine ol on o.OrderId = ol.OrderId
                                 WHERE o.OrderId = @OrderId
                                 ORDER BY ol.BundleID, Model";
-                            var cmd = new SqlCommand(query, conn);
+                        var cmd = new SqlCommand(query, conn);
 
-                            cmd.Parameters.AddWithValue("@OrderId", orderId);
-                            using (var reader = cmd.ExecuteReader())
-                            {
-                                resultTable.Load(reader);
-                                Console.WriteLine("Total results rows: " + resultTable.Rows.Count);
-                            }
-                            if (resultTable.Rows.Count > 0)
-                            {
-                                var row = resultTable.Rows[0];
-                                order.OrderID = Convert.ToInt32(row["OrderID"]);
-                                order.CustomerName = row["CustomerName"].ToString();
-                                order.BillingAddress = row["BillingAddress1"].ToString() + ", " +
-                                    (string.IsNullOrEmpty(row["BillingAddress2"].ToString()) ? "" : row["BillingAddress2"].ToString() + ", ") +
-                                    row["BillingCity"].ToString() + ", " +
-                                    row["BillingState"].ToString() + " " +
-                                    row["BillingPostalCode"].ToString();
-                                order.DTCreated = Convert.ToDateTime(row["DTCreated"]);
+                        cmd.Parameters.AddWithValue("@OrderId", orderId);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            resultTable.Load(reader);
+                            Console.WriteLine("Total results rows: " + resultTable.Rows.Count);
+                        }
+                        if (resultTable.Rows.Count > 0)
+                        {
+                            var row = resultTable.Rows[0];
+                            order.OrderID = Convert.ToInt32(row["OrderID"]);
+                            order.CustomerName = row["CustomerName"].ToString();
+                            order.BillingAddress = row["BillingAddress1"].ToString() + ", " +
+                                (string.IsNullOrEmpty(row["BillingAddress2"].ToString()) ? "" : row["BillingAddress2"].ToString() + ", ") +
+                                row["BillingCity"].ToString() + ", " +
+                                row["BillingState"].ToString() + " " +
+                                row["BillingPostalCode"].ToString();
+                            order.DTCreated = Convert.ToDateTime(row["DTCreated"]);
 
-                                foreach (DataRow itemRow in resultTable.Rows)
+                            foreach (DataRow itemRow in resultTable.Rows)
+                            {
+                                order.OrderLines.Add(new OrderLine
                                 {
-                                    order.OrderLines.Add(new OrderLine
-                                    {
-                                        OrderLineID = Convert.ToInt32(itemRow["OrderLineID"]),
-                                        BundleID = Convert.ToInt32(itemRow["BundleID"]),
-                                        Model = itemRow["Model"].ToString().TrimEnd(),
-                                        Quantity = Convert.ToInt32(itemRow["Quantity"]),
-                                        SellPrice = Convert.ToDecimal(itemRow["SellPrice"]),
-                                        LineTotal = Convert.ToDecimal(itemRow["LineTotal"])
-                                    });
-                                }
+                                    OrderLineID = Convert.ToInt32(itemRow["OrderLineID"]),
+                                    BundleID = Convert.ToInt32(itemRow["BundleID"]),
+                                    Model = itemRow["Model"].ToString().TrimEnd(),
+                                    Quantity = Convert.ToInt32(itemRow["Quantity"]),
+                                    SellPrice = Convert.ToDecimal(itemRow["SellPrice"]),
+                                    LineTotal = Convert.ToDecimal(itemRow["LineTotal"])
+                                });
                             }
+                        }
                     }
-                    
+
                 }
                 catch (Exception ex)
                 {
@@ -403,6 +421,20 @@ namespace document_viewer_demo.Controllers
             return order;
         }
 
+        List<OrderBundle> SplitOrderIntoBundles(SNOrder order)
+        {
+            return order.OrderLines
+                .GroupBy(item => item.BundleID)
+                .Select(group => new OrderBundle
+                {
+                    BundleID = group.Key,
+                    CustomerName = order.CustomerName,
+                    ShippingAddress = order.BillingAddress,
+                    OrderDate = order.DTCreated,
+                    OrderLines = group.ToList()
+                })
+                .ToList();
+        }
         public IActionResult Privacy()
         {
             return View();
