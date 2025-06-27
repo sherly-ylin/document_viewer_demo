@@ -12,10 +12,10 @@ namespace document_viewer_demo.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-        // List<int> orderIds = new List<int> { 7259, 7261, 7262, 7264, 7266 };
-        List<int> orderIds = new List<int> { 7262, 7264 };
+        List<int> orderIds = new List<int> { 7259, 7261, 7262, 7264, 7266 };
+        // List<int> orderIds = new List<int> { 7262, 7264 };
         // int bundleOrderId = 7262;
-        bool testBundle = true;
+        bool testBundle = false;
 
         // private List<int> pageLengths { get; set; } = new List<int>();
         public HomeController(ILogger<HomeController> logger)
@@ -41,7 +41,7 @@ namespace document_viewer_demo.Controllers
                     // generatedDocumentBase64 = LoadDocument("Documents/sample.docx", StreamType.WordprocessingML);
 
                     generatedDocumentBase64 = LoadTemplateAndMergeMultipleOrders(orderIds);
-                    generatedDocumentBase64 = LoadTemplateAndMergeMultipleOrders(orderIds);
+                    // generatedDocumentBase64 = LoadTemplateAndMergeMultipleOrders(orderIds);
 
                     HttpContext.Session.SetString(sessionKey, generatedDocumentBase64);
                 }
@@ -252,15 +252,20 @@ namespace document_viewer_demo.Controllers
             using (ServerTextControl masterTx = new ServerTextControl())
             {
                 masterTx.Create();
+                var breakInd = -1;
 
                 for (int i = 0; i < orderIds.Count; i++)
                 {
                     Console.WriteLine("Processing OrderId: " + orderIds[i]);
                     using (ServerTextControl tx = new ServerTextControl())
                     {
+                        SNOrder dbOrder = GetMappedOrderObj(orderIds[i]);
+                        string jsonData = GetMappedOrderJson(orderIds[i]);
+
+                        Console.WriteLine(JsonConvert.SerializeObject(dbOrder));
+                        // Console.WriteLine(jsonData);
                         tx.Create();
 
-                        // Load the template
                         var loadSettings = new LoadSettings
                         {
                             ApplicationFieldFormat = ApplicationFieldFormat.MSWord,
@@ -269,24 +274,49 @@ namespace document_viewer_demo.Controllers
 
                         if (testBundle)
                         {
-                            tx.Load("Documents/template_order_bundle.docx", StreamType.WordprocessingML, loadSettings);
+                            Console.WriteLine("Processing bundles");
+                            var bundles = SplitOrderIntoBundles(dbOrder);
+                            foreach (OrderBundle bundle in bundles)
+                            {
+                                Console.WriteLine(JsonConvert.SerializeObject(bundle));
 
+                                using (ServerTextControl bundleTx = new ServerTextControl())
+                                {
+                                    bundleTx.Create();
+
+                                    bundleTx.Load("Documents/template_order_bundle.docx", StreamType.WordprocessingML, loadSettings);
+                                    using (MailMerge mailMerge = new MailMerge { TextComponent = bundleTx })
+                                    {
+                                        mailMerge.FormFieldMergeType = FormFieldMergeType.None;
+                                        mailMerge.MergeObject(bundle);
+                                    }
+
+
+                                    byte[] bundleBytes;
+                                    bundleTx.Save(out bundleBytes, BinaryStreamType.InternalUnicodeFormat);
+
+                                    Console.WriteLine("Appending document for OrderId: " + orderIds[i] + " bundle " + bundle.BundleID);
+                                    tx.Append(bundleBytes, BinaryStreamType.InternalUnicodeFormat, AppendSettings.None);
+                                    Console.WriteLine("Appending page break");
+                                    tx.Append("\f", StringStreamType.PlainText, AppendSettings.None);
+                                }
+                            }
+                            //Remove the last page break
+                            breakInd = tx.Find("\f", -1, FindOptions.Reverse);
+                            tx.Select(breakInd, 1);
+                            tx.Clear();
                         }
                         else
                         {
                             tx.Load("Documents/template_order.docx", StreamType.WordprocessingML, loadSettings);
+                            using (MailMerge mailMerge = new MailMerge { TextComponent = tx })
+                            {
+                                mailMerge.FormFieldMergeType = FormFieldMergeType.None;
+                                // mailMerge.MergeObject(dbOrder);
+                                mailMerge.MergeObject(jsonData);
+                            }
                         }
 
-                            SNOrder dbOrder = GetOrderFromDb(orderIds[i]);
-                            Console.WriteLine(JsonConvert.SerializeObject(dbOrder));
-                        if (testBundle) { }
-                        
-                            using (MailMerge mailMerge = new MailMerge { TextComponent = tx })
-                        {
-                            mailMerge.FormFieldMergeType = FormFieldMergeType.None;
-                            mailMerge.MergeObject(dbOrder);
-                        }
-                        
                         byte[] bytes;
                         tx.Save(out bytes, BinaryStreamType.InternalUnicodeFormat);
 
@@ -298,7 +328,6 @@ namespace document_viewer_demo.Controllers
                         Console.WriteLine("Appending page break");
                         masterTx.Append("\f", StringStreamType.PlainText, AppendSettings.None);
 
-
                         // sections = masterTx.Sections;
                         // Console.WriteLine("number of sections after appending: " + sections.Count);
                         Console.WriteLine("number of pages: " + masterTx.Pages);
@@ -306,8 +335,8 @@ namespace document_viewer_demo.Controllers
                 }
 
                 //Remove the last page break
-                var index = masterTx.Find("\f", -1, FindOptions.Reverse);
-                masterTx.Select(index, 1);
+                breakInd = masterTx.Find("\f", -1, FindOptions.Reverse);
+                masterTx.Select(breakInd, 1);
                 masterTx.Clear();
 
                 // Save the merged document to a byte array
@@ -324,7 +353,7 @@ namespace document_viewer_demo.Controllers
         }
 
         // Keep your existing GetOrderFromDb method unchanged
-        public SNOrder GetOrderFromDb(int orderId, bool byBundle = false)
+        public DataTable GetOrderDataFromDb(int orderId)
         {
             Console.WriteLine("Retrieving order info from database for OrderId: " + orderId);
             var order = new SNOrder();
@@ -337,76 +366,19 @@ namespace document_viewer_demo.Controllers
                 conn.Open();
                 try
                 {
-
-                    if (byBundle)
-                    {
-                        var query = @"SELECT * FROM SNOrder o 
+                    var query = @"SELECT o.OrderID, o.CustomerName, o.BillingAddress1, o.BillingAddress2, o.BillingCity, o.BillingState, o.BillingPostalCode, o.DTCreated,
+                                ol.OrderLineId, ol.Model, ol.BundleID, ol.SellPrice, ol.Quantity, ol.LineTotal FROM SNOrder o 
                                 JOIN SNOrderLine ol on o.OrderId = ol.OrderId
                                 WHERE o.OrderId = @OrderId
                                 ORDER BY ol.BundleID, Model";
-                        var cmd = new SqlCommand(query, conn);
+                    var cmd = new SqlCommand(query, conn);
 
-                        cmd.Parameters.AddWithValue("@OrderId", orderId);
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            resultTable.Load(reader);
-                        }
-
-                        // For each distinct BundleID in resultTable
-                        var distinctBundleIds = resultTable.AsEnumerable()
-                            .Select(r => r.Field<int>("BundleID"))
-                            .Distinct();
-
-                        foreach (var bundleId in distinctBundleIds)
-                        {
-                            Console.WriteLine("Processing BundleID: " + bundleId);
-                            order.OrderBundles.Add(new OrderBundle
-                            {
-                                BundleID = bundleId
-                            });
-                        }
-                    }
-                    else
+                    cmd.Parameters.AddWithValue("@OrderId", orderId);
+                    using (var reader = cmd.ExecuteReader())
                     {
-                        var query = @"SELECT * FROM SNOrder o 
-                                JOIN SNOrderLine ol on o.OrderId = ol.OrderId
-                                WHERE o.OrderId = @OrderId
-                                ORDER BY ol.BundleID, Model";
-                        var cmd = new SqlCommand(query, conn);
-
-                        cmd.Parameters.AddWithValue("@OrderId", orderId);
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            resultTable.Load(reader);
-                            Console.WriteLine("Total results rows: " + resultTable.Rows.Count);
-                        }
-                        if (resultTable.Rows.Count > 0)
-                        {
-                            var row = resultTable.Rows[0];
-                            order.OrderID = Convert.ToInt32(row["OrderID"]);
-                            order.CustomerName = row["CustomerName"].ToString();
-                            order.BillingAddress = row["BillingAddress1"].ToString() + ", " +
-                                (string.IsNullOrEmpty(row["BillingAddress2"].ToString()) ? "" : row["BillingAddress2"].ToString() + ", ") +
-                                row["BillingCity"].ToString() + ", " +
-                                row["BillingState"].ToString() + " " +
-                                row["BillingPostalCode"].ToString();
-                            order.DTCreated = Convert.ToDateTime(row["DTCreated"]);
-
-                            foreach (DataRow itemRow in resultTable.Rows)
-                            {
-                                order.OrderLines.Add(new OrderLine
-                                {
-                                    OrderLineID = Convert.ToInt32(itemRow["OrderLineID"]),
-                                    BundleID = Convert.ToInt32(itemRow["BundleID"]),
-                                    Model = itemRow["Model"].ToString().TrimEnd(),
-                                    Quantity = Convert.ToInt32(itemRow["Quantity"]),
-                                    SellPrice = Convert.ToDecimal(itemRow["SellPrice"]),
-                                    LineTotal = Convert.ToDecimal(itemRow["LineTotal"])
-                                });
-                            }
-                        }
+                        resultTable.Load(reader);
+                        Console.WriteLine("Total results rows: " + resultTable.Rows.Count);
                     }
-
                 }
                 catch (Exception ex)
                 {
@@ -418,7 +390,48 @@ namespace document_viewer_demo.Controllers
                 }
             }
 
+            return resultTable;
+        }
+        public SNOrder GetMappedOrderObj(int orderId)
+        {
+            Console.WriteLine("Retrieving order info from database for OrderId: " + orderId);
+            var order = new SNOrder();
+
+            DataTable resultTable = GetOrderDataFromDb(orderId);
+
+            if (resultTable.Rows.Count > 0)
+            {
+                var row = resultTable.Rows[0];
+                order.OrderID = Convert.ToInt32(row["OrderID"]);
+                order.CustomerName = row["CustomerName"].ToString();
+                order.BillingAddress = row["BillingAddress1"].ToString() + ", " +
+                    (string.IsNullOrEmpty(row["BillingAddress2"].ToString()) ? "" : row["BillingAddress2"].ToString() + ", ") +
+                    row["BillingCity"].ToString() + ", " +
+                    row["BillingState"].ToString() + " " +
+                    row["BillingPostalCode"].ToString();
+                order.DTCreated = Convert.ToDateTime(row["DTCreated"]);
+
+                foreach (DataRow itemRow in resultTable.Rows)
+                {
+                    order.OrderLines.Add(new OrderLine
+                    {
+                        OrderLineID = Convert.ToInt32(itemRow["OrderLineID"]),
+                        BundleID = Convert.ToInt32(itemRow["BundleID"]),
+                        Model = itemRow["Model"].ToString().TrimEnd(),
+                        Quantity = Convert.ToInt32(itemRow["Quantity"]),
+                        SellPrice = Convert.ToDecimal(itemRow["SellPrice"]),
+                        LineTotal = Convert.ToDecimal(itemRow["LineTotal"])
+                    });
+                }
+            }
+
             return order;
+        }
+        public string GetMappedOrderJson(int orderId)
+        {
+            DataTable resultTable = GetOrderDataFromDb(orderId);
+            string jsonData = JsonConvert.SerializeObject(resultTable);
+            return jsonData;
         }
 
         List<OrderBundle> SplitOrderIntoBundles(SNOrder order)
@@ -429,8 +442,8 @@ namespace document_viewer_demo.Controllers
                 {
                     BundleID = group.Key,
                     CustomerName = order.CustomerName,
-                    ShippingAddress = order.BillingAddress,
-                    OrderDate = order.DTCreated,
+                    BillingAddress = order.BillingAddress,
+                    DTCreated = order.DTCreated,
                     OrderLines = group.ToList()
                 })
                 .ToList();

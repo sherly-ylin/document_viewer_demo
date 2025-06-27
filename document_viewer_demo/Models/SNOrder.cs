@@ -27,15 +27,7 @@
         public List<OrderBundle> OrderBundles { get; set; } = new List<OrderBundle>();
 
     }
-    public class OrderBundle
-    {
-        public int BundleID { get; set; }
-        public string CustomerName { get; set; }
-        public string ShippingAddress { get; set; }
-        public DateTime OrderDate { get; set; }
-        public decimal BundleTotal => OrderLines.Sum(i => i.LineTotal);
-        public List<OrderLine> OrderLines { get; set; } = new List<OrderLine>();
-    }
+
     public class OrderLine
     {
         public int OrderLineID { get; set; }
@@ -44,6 +36,15 @@
         public int Quantity { get; set; }
         public decimal SellPrice { get; set; }
         public decimal LineTotal { get; set; }
+    }
+        public class OrderBundle
+    {
+        public int BundleID { get; set; }
+        public string CustomerName { get; set; }
+        public string BillingAddress { get; set; }
+        public DateTime DTCreated { get; set; }
+        public decimal BundleTotal => OrderLines.Sum(i => i.LineTotal);
+        public List<OrderLine> OrderLines { get; set; } = new List<OrderLine>();
     }
 
 }
