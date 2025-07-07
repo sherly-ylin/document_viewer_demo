@@ -1,92 +1,114 @@
 [
   {
-    "OrderID": 7266,
-    "CustomerName": "2515 University Ave SE LLC",
-    "BillingAddress1": "2515 University Ave SE",
-    "BillingAddress2": "",
-    "BillingCity": "Minneapolis",
-    "BillingState": "MN",
-    "BillingPostalCode": "55414",
-    "DTCreated": "2022-02-15T15:17:39",
-    "OrderLineId": 55742,
-    "Model": "IM C2500-RS   ",
-    "BundleID": 1,
-    "SellPrice": 4150.7692,
-    "Quantity": 1,
-    "LineTotal": 4150.7692
-  },
-  {
-    "OrderID": 7266,
-    "CustomerName": "2515 University Ave SE LLC",
-    "BillingAddress1": "2515 University Ave SE",
-    "BillingAddress2": "",
-    "BillingCity": "Minneapolis",
-    "BillingState": "MN",
-    "BillingPostalCode": "55414",
-    "DTCreated": "2022-02-15T15:17:39",
-    "OrderLineId": 55743,
-    "Model": "Punch Unit PU3070 NA",
-    "BundleID": 1,
-    "SellPrice": 641.5385,
-    "Quantity": 1,
-    "LineTotal": 641.5385
-  },
-
-  {
-    "OrderID": 7266,
-    "CustomerName": "2515 University Ave SE LLC",
-    "BillingAddress": "2515 University Ave SE, Minneapolis, MN 55414",
-    "DTCreated": "2022-02-15T15:17:39",
-    "OrderLines": [
+    "OrderID": 7262,
+    "CustomerName": "Morrison Sund PLLC",
+    "TotalSellPrice": 56865.8749,
+    "DTCreated": "2022-02-15T09:05:50",
+    "BillingAddress": "5125 County Road 101 \r\nSte 200  Minnetonka, MN 55345",
+    "OrderBundle": [
       {
-        "OrderLineID": 55742,
         "BundleID": 1,
-        "Model": "IM C2500-RS",
-        "Quantity": 1,
-        "SellPrice": 4150.7692,
-        "LineTotal": 4150.7692
+        "BundleTotal": 45793.1549,
+        "OrderLines": [
+          {
+            "OrderLineId": 55727,
+            "Model": "Bridge Unit BU3090",
+            "SellPrice": 110.27,
+            "Quantity": 3,
+            "LineTotal": 330.81
+          },
+          {
+            "OrderLineId": 55730,
+            "Model": "POSTSCRIPT3 UNIT TYPE M37",
+            "SellPrice": 323.04,
+            "Quantity": 3,
+            "LineTotal": 969.12
+          },
+          {
+            "OrderLineId": 55726,
+            "Model": "Punch Unit PU3080 NA",
+            "SellPrice": 540.99,
+            "Quantity": 3,
+            "LineTotal": 1622.97
+          },
+          {
+            "OrderLineId": 55725,
+            "Model": "Finisher SR3260",
+            "SellPrice": 952.24,
+            "Quantity": 3,
+            "LineTotal": 2856.72
+          },
+          {
+            "OrderLineId": 55728,
+            "Model": "LCIT RT3040",
+            "SellPrice": 1056.03,
+            "Quantity": 3,
+            "LineTotal": 3168.09
+          },
+          {
+            "OrderLineId": 55729,
+            "Model": "LCIT PB3290",
+            "SellPrice": 1056.03,
+            "Quantity": 3,
+            "LineTotal": 3168.09
+          },
+          {
+            "OrderLineId": 55724,
+            "Model": "IM C6000-RS",
+            "SellPrice": 11225.785,
+            "Quantity": 3,
+            "LineTotal": 33677.3549
+          }
+        ]
       },
       {
-        "OrderLineID": 55743,
-        "BundleID": 1,
-        "Model": "Punch Unit PU3070 NA",
-        "Quantity": 1,
-        "SellPrice": 641.5385,
-        "LineTotal": 641.5385
+        "BundleID": 2,
+        "BundleTotal": 11072.72,
+        "OrderLines": [
+          {
+            "OrderLineId": 55734,
+            "Model": "Bridge Unit BU3090",
+            "SellPrice": 110.27,
+            "Quantity": 1,
+            "LineTotal": 110.27
+          },
+          {
+            "OrderLineId": 55736,
+            "Model": "POSTSCRIPT3 UNIT TYPE M37",
+            "SellPrice": 323.04,
+            "Quantity": 1,
+            "LineTotal": 323.04
+          },
+          {
+            "OrderLineId": 55733,
+            "Model": "Punch Unit PU3080 NA",
+            "SellPrice": 540.99,
+            "Quantity": 1,
+            "LineTotal": 540.99
+          },
+          {
+            "OrderLineId": 55735,
+            "Model": "Paper Feed Unit PB3280 (550 x 2)",
+            "SellPrice": 875.7,
+            "Quantity": 1,
+            "LineTotal": 875.7
+          },
+          {
+            "OrderLineId": 55732,
+            "Model": "Finisher SR3260",
+            "SellPrice": 952.24,
+            "Quantity": 1,
+            "LineTotal": 952.24
+          },
+          {
+            "OrderLineId": 55731,
+            "Model": "IM C3500-RS",
+            "SellPrice": 8270.48,
+            "Quantity": 1,
+            "LineTotal": 8270.48
+          }
+        ]
       }
-    ],
-    "TotalSellPrice": 4792.3077
-  },
-  {
-    "OrderID": 7266,
-    "CustomerName": "2515 University Ave SE LLC",
-    "BillingAddress1": "2515 University Ave SE",
-    "BillingAddress2": "",
-    "BillingCity": "Minneapolis",
-    "BillingState": "MN",
-    "BillingPostalCode": "55414",
-    "DTCreated": "2022-02-15T15:17:39",
-    "OrderLineId": 55742,
-    "Model": "IM C2500-RS   ",
-    "BundleID": 1,
-    "SellPrice": 4150.7692,
-    "Quantity": 1,
-    "LineTotal": 4150.7692
-  },
-  {
-    "OrderID": 7266,
-    "CustomerName": "2515 University Ave SE LLC",
-    "BillingAddress1": "2515 University Ave SE",
-    "BillingAddress2": "",
-    "BillingCity": "Minneapolis",
-    "BillingState": "MN",
-    "BillingPostalCode": "55414",
-    "DTCreated": "2022-02-15T15:17:39",
-    "OrderLineId": 55743,
-    "Model": "Punch Unit PU3070 NA",
-    "BundleID": 1,
-    "SellPrice": 641.5385,
-    "Quantity": 1,
-    "LineTotal": 641.5385
+    ]
   }
 ]

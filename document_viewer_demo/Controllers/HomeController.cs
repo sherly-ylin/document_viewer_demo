@@ -16,7 +16,9 @@ namespace document_viewer_demo.Controllers
         List<int> orderIds = new List<int> { 7259, 7261, 7262, 7264, 7266 };
         // List<int> orderIds = new List<int> { 7262, 7264 };
         // int bundleOrderId = 7262;
-        bool testBundle = false;
+        bool testBundle = true;
+        string connectionString = "Server=192.168.20.97;Database=SalesChain0602_MS_MN;User Id=ylin;Password=9244@Wahg;TrustServerCertificate=True;";
+
 
         // private List<int> pageLengths { get; set; } = new List<int>();
         public HomeController(ILogger<HomeController> logger)
@@ -28,8 +30,9 @@ namespace document_viewer_demo.Controllers
         {
             try
             {
-                string sessionKey = $"merged_document_{string.Join("_", orderIds)}";
-
+                // string sessionKey = $"merged_document_{string.Join("_", orderIds)}";
+                string sessionKey = $"sc_document_{DateTime.Now}";
+                Console.WriteLine(sessionKey);
 
                 Console.WriteLine("=====> Session Key: " + sessionKey);
                 // Try to get from session first
@@ -39,12 +42,10 @@ namespace document_viewer_demo.Controllers
                 {
                     _logger.LogInformation("Document not found in session, generating new document");
                     // Generate and store in session
-                    // generatedDocumentBase64 = LoadDocument("Documents/sample.docx", StreamType.WordprocessingML);
-                    // foreach (int orderId in orderIds)
-                    // {
-                    //     await GetOrderDataJsonFromDb(orderId);
-                    // }
-                    generatedDocumentBase64 = await LoadTemplateAndMergeMultipleOrders(orderIds);
+
+                    generatedDocumentBase64 = Convert.ToBase64String(System.IO.File.ReadAllBytes("Documents/Order Breakdown w Credits.pdf"));
+                    // generatedDocumentBase64 = GetDocumentBytes("Documents/Order Breakdown w Credits.rtf", StreamType.RichTextFormat);
+                    // generatedDocumentBase64 = await LoadTemplateAndMergeMultipleOrders(orderIds);
                     // generatedDocumentBase64 = LoadTemplateAndMergeMultipleOrders(orderIds);
 
                     HttpContext.Session.SetString(sessionKey, generatedDocumentBase64);
@@ -68,22 +69,25 @@ namespace document_viewer_demo.Controllers
 
             return View();
         }
+        public IActionResult ClearCache()
+        {
+            string sessionKey = $"merged_document_{string.Join("_", orderIds)}";
 
-        private string LoadDocument(string filePath, StreamType streamType)
+            HttpContext.Session.Remove(sessionKey);
+            _logger.LogInformation("Document cache cleared from session");
+
+            return RedirectToAction("Index");
+        }
+
+        private string GetDocumentBytes(string filePath, StreamType streamType)
         {
             using (ServerTextControl tx = new ServerTextControl())
             {
                 tx.Create();
 
-                // Load the template
-                var loadSettings = new LoadSettings
-                {
-                    ApplicationFieldFormat = ApplicationFieldFormat.MSWord,
-                    LoadSubTextParts = true
-                };
-                tx.Load(filePath, streamType, loadSettings);
-                SectionCollection sections = tx.Sections;
-                Console.WriteLine("number of sections: " + sections.Count);
+                LoadTemplate(tx, filePath, streamType);
+                // SectionCollection sections = tx.Sections;
+                // Console.WriteLine("number of sections: " + sections.Count);
 
                 byte[] bytes;
                 tx.Save(out bytes, BinaryStreamType.InternalUnicodeFormat);
@@ -127,47 +131,38 @@ namespace document_viewer_demo.Controllers
             }
         }
 
-        public IActionResult DownloadDocumentAsPdf(string sessionKey)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(sessionKey))
-                {
-                    return BadRequest("Session key is missing");
-                }
+        // public IActionResult DownloadDocumentAsPdf(string sessionKey)
+        // {
+        //     try
+        //     {
+        //         if (string.IsNullOrEmpty(sessionKey))
+        //         {
+        //             return BadRequest("Session key is missing");
+        //         }
 
-                // Get the document from session
-                string generatedDocumentBase64 = HttpContext.Session.GetString(sessionKey);
-                if (string.IsNullOrEmpty(generatedDocumentBase64))
-                {
-                    return BadRequest("Document no longer available in session. Please refresh the page to regenerate the document.");
-                }
+        //         // Get the document from session
+        //         string generatedDocumentBase64 = HttpContext.Session.GetString(sessionKey);
+        //         if (string.IsNullOrEmpty(generatedDocumentBase64))
+        //         {
+        //             return BadRequest("Document no longer available in session. Please refresh the page to regenerate the document.");
+        //         }
 
-                _logger.LogInformation("Downloading full document as PDF");
+        //         _logger.LogInformation("Downloading full document as PDF");
 
-                byte[] documentBytes = Convert.FromBase64String(generatedDocumentBase64);
-                byte[] pdfBytes = ConvertToPdf(documentBytes);
+        //         byte[] documentBytes = Convert.FromBase64String(generatedDocumentBase64);
+        //         byte[] pdfBytes = ConvertToPdf(documentBytes);
 
-                string fileName = $"merged_orders_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
-                return File(pdfBytes, "application/pdf", fileName);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error downloading PDF");
-                return StatusCode(500, "Error generating PDF: " + ex.Message);
-            }
-        }
+        //         string fileName = $"merged_orders_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+        //         return File(pdfBytes, "application/pdf", fileName);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         _logger.LogError(ex, "Error downloading PDF");
+        //         return StatusCode(500, "Error generating PDF: " + ex.Message);
+        //     }
+        // }
 
-        // Helper method to clear session cache (useful for testing or manual refresh)
-        public IActionResult ClearCache()
-        {
-            string sessionKey = $"merged_document_{string.Join("_", orderIds)}";
 
-            HttpContext.Session.Remove(sessionKey);
-            _logger.LogInformation("Document cache cleared from session");
-
-            return RedirectToAction("Index");
-        }
         private byte[] ExtractSelectedPages(byte[] documentBytes, int[] pageNumbers)
         {
             using (ServerTextControl sourceTx = new ServerTextControl())
@@ -193,14 +188,14 @@ namespace document_viewer_demo.Controllers
                     for (int i = 1; i <= pageLengths.Count; i++)
                     {
                         var indexPageBreak = sourceTx.Find("\f", pageStartPositions[i - 1], FindOptions.MatchWholeWord);
-                        Console.WriteLine($"Page break found at index: {indexPageBreak}");
+                        // Console.WriteLine($"Page break found at index: {indexPageBreak}");
                         pageStartPositions.Add(indexPageBreak + 1);
                     }
 
 
-                    Console.WriteLine("Total pages in document: " + pages.Count);
-                    Console.WriteLine("Page lengths: " + string.Join(", ", pageLengths));
-                    Console.WriteLine("Page start positions: " + string.Join(", ", pageStartPositions));
+                    // Console.WriteLine("Total pages in document: " + pages.Count);
+                    // Console.WriteLine("Page lengths: " + string.Join(", ", pageLengths));
+                    // Console.WriteLine("Page start positions: " + string.Join(", ", pageStartPositions));
 
                     for (int i = 0; i < pageNumbers.Length; i++)
                     {
@@ -210,24 +205,25 @@ namespace document_viewer_demo.Controllers
                         }
 
                         var page = pages.GetItem(pageNumbers[i] - 1); // Pages are 0-indexed
-                        Console.WriteLine($"Extracting page {pageNumbers[i]}: Start={pageStartPositions[pageNumbers[i] - 1]}, End={pageStartPositions[pageNumbers[i]] - pageStartPositions[pageNumbers[i] - 1] - 1}, Length={page.Length}");
+                        // Console.WriteLine($"Extracting page {pageNumbers[i]}: Start={pageStartPositions[pageNumbers[i] - 1]}, End={pageStartPositions[pageNumbers[i]] - pageStartPositions[pageNumbers[i] - 1] - 1}, Length={page.Length}");
 
                         sourceTx.Select(pageStartPositions[pageNumbers[i] - 1], pageStartPositions[pageNumbers[i]] - pageStartPositions[pageNumbers[i] - 1]);
 
                         byte[] pageContent;
                         sourceTx.Selection.Save(out pageContent, BinaryStreamType.InternalUnicodeFormat);
-                        Console.WriteLine($"Extracted page {pageNumbers[i]} content length: {pageStartPositions[pageNumbers[i]] - pageStartPositions[pageNumbers[i] - 1]}");
+                        // Console.WriteLine($"Extracted page {pageNumbers[i]} content length: {pageStartPositions[pageNumbers[i]] - pageStartPositions[pageNumbers[i] - 1]}");
 
                         targetTx.Append(pageContent, BinaryStreamType.InternalUnicodeFormat, AppendSettings.None);
                     }
                     var index = targetTx.Find("\f", -1, FindOptions.Reverse);
-                    Console.WriteLine($"Selecttion complete == Page break found at index: {index}");
+                    // Console.WriteLine($"Selecttion complete == Page break found at index: {index}");
+
                     if (index > 0)
                     {
                         // Clear the last page break if it exists
                         targetTx.Select(index, 1);
                         targetTx.Clear();
-                        Console.WriteLine("Cleared last char");
+                        // Console.WriteLine("Cleared last char");
                     }
 
                     // Save the extracted pages
@@ -249,7 +245,28 @@ namespace document_viewer_demo.Controllers
                 return pdfBytes;
             }
         }
+        private void LoadTemplate(ServerTextControl tx, string fp, StreamType streamType = StreamType.AllFormats)
+        {
 
+            fp = fp.Trim();
+            string formatStr = fp.Substring(fp.LastIndexOf('.'));
+            streamType = formatStr switch
+            {
+                ".pdf" => StreamType.AdobePDF,
+                ".rtf" => StreamType.RichTextFormat,
+                ".tx" => StreamType.InternalUnicodeFormat,
+                _ => StreamType.WordprocessingML
+            };
+            Console.WriteLine(formatStr);
+
+            var loadSettings = new LoadSettings
+            {
+                // ApplicationFieldFormat = ApplicationFieldFormat.MSWord,
+                // LoadSubTextParts = true
+            };
+
+            tx.Load(fp, streamType, loadSettings);
+        }
         private async Task<string> LoadTemplateAndMergeMultipleOrders(List<int> orderIds)
         {
             Console.WriteLine("=== Merging multiple orders: " + string.Join(", ", orderIds));
@@ -268,7 +285,6 @@ namespace document_viewer_demo.Controllers
                         string jsonData = await GetOrderDataJsonFromDb(orderIds[i], true);
 
                         // Console.WriteLine(JsonConvert.SerializeObject(dbOrder));
-                        Console.WriteLine(jsonData);
                         tx.Create();
 
                         var loadSettings = new LoadSettings
@@ -284,12 +300,13 @@ namespace document_viewer_demo.Controllers
                         else
                         {
                             tx.Load("Documents/template_order.docx", StreamType.WordprocessingML, loadSettings);
-                            using (MailMerge mailMerge = new MailMerge { TextComponent = tx })
-                            {
-                                mailMerge.FormFieldMergeType = FormFieldMergeType.None;
-                                // mailMerge.MergeObject(dbOrder);
-                                mailMerge.MergeJsonData(jsonData);
-                            }
+
+                        }
+                        using (MailMerge mailMerge = new MailMerge { TextComponent = tx })
+                        {
+                            mailMerge.FormFieldMergeType = FormFieldMergeType.None;
+                            // mailMerge.MergeObject(dbOrder);
+                            mailMerge.MergeJsonData(jsonData);
                         }
 
                         byte[] bytes;
@@ -327,14 +344,29 @@ namespace document_viewer_demo.Controllers
             }
         }
 
-        // Keep your existing GetOrderFromDb method unchanged
+        public string GetQuery()
+        {
+            var query = "";
+
+            return query;
+        }
+
+        public async Task<byte[]> GetDocumentFromDB(int fileId)
+        {
+            using var connection = new SqlConnection(connectionString);
+            using var command = new SqlCommand("SELECT * FROM Documents WHERE FileId = @Id", connection);
+            command.Parameters.AddWithValue("@Id", fileId);
+            await connection.OpenAsync();
+            var result = await command.ExecuteScalarAsync();
+            return result as byte[];
+        }
+
         public async Task<string> GetOrderDataJsonFromDb(int orderId, bool byBundle = false)
         {
             Console.WriteLine("Retrieving order info from database for OrderId: " + orderId);
 
-            string connectionString = "Server=192.168.20.97;Database=SalesChain0602_MS_MN;User Id=ylin;Password=9244@Wahg;TrustServerCertificate=True;";
             string jsonRes = string.Empty;
-            using (var conn = new Microsoft.Data.SqlClient.SqlConnection(connectionString))
+            using (var conn = new SqlConnection(connectionString))
             {
                 await conn.OpenAsync();
                 try
@@ -352,35 +384,34 @@ namespace document_viewer_demo.Controllers
                                 FROM SNOrder o 
                                 WHERE o.OrderId = @OrderId
                                 FOR JSON PATH;";
-                    // if (byBundle)
-                    // {
-                    //     query = @"SELECT o.OrderID, o.CustomerName, o.SubTotalAmount AS TotalSellPrice, o.DTCreated,
-                    //                     CONCAT(
-                    //                         TRIM(o.BillingAddress1), ' ', TRIM(o.BillingAddress2), ' ', 
-                    //                         TRIM(o.BillingCity), ', ', TRIM(o.BillingState), ' ', 
-                    //                         TRIM(o.BillingPostalCode)
-                    //                     ) AS BillingAddress,
-                    //                     (SELECT ol.BundleID, SUM(ol.LineTotal) AS BundleTotal,
-                    //                         (SELECT ol2.OrderLineId, TRIM(ol2.Model) AS Model, ol2.SellPrice, ol2.Quantity, ol2.LineTotal
-                    //                             FROM SNOrderLine ol2
-                    //                             WHERE ol2.OrderId = o.OrderId AND ol2.BundleID = ol.BundleID
-                    //                             FOR JSON PATH
-                    //                         ) AS OrderLines
-                    //                         FROM SNOrderLine ol
-                    //                         WHERE ol.OrderId = o.OrderId
-                    //                         GROUP BY ol.BundleID
-                    //                         FOR JSON PATH
-                    //                     ) AS OrderBundle
-                    //                     FROM SNOrder o
-                    //                     WHERE o.OrderId = 7262
-                    //                     FOR JSON PATH
-                    //                     ";
-                    // }
-                    var cmd = new SqlCommand(query, conn);
-                    // var cmd = new SqlCommand(queryBundle, conn);
-                    cmd.Parameters.AddWithValue("@OrderId", orderId);
+                    if (byBundle)
+                    {
+                        query = @"SELECT o.OrderID, o.CustomerName, o.SubTotalAmount AS TotalSellPrice, o.DTCreated,
+                                        CONCAT(
+                                            TRIM(o.BillingAddress1), ' ', TRIM(o.BillingAddress2), ' ', 
+                                            TRIM(o.BillingCity), ', ', TRIM(o.BillingState), ' ', 
+                                            TRIM(o.BillingPostalCode)
+                                        ) AS BillingAddress,
+                                        (SELECT ol.BundleID, SUM(ol.LineTotal) AS BundleTotal,
+                                            (SELECT ol2.OrderLineId, TRIM(ol2.Model) AS Model, ol2.SellPrice, ol2.Quantity, ol2.LineTotal
+                                                FROM SNOrderLine ol2
+                                                WHERE ol2.OrderId = o.OrderId AND ol2.BundleID = ol.BundleID
+                                                FOR JSON PATH
+                                            ) AS OrderLines
+                                            FROM SNOrderLine ol
+                                            WHERE ol.OrderId = o.OrderId
+                                            GROUP BY ol.BundleID
+                                            FOR JSON PATH
+                                        ) AS OrderBundle
+                                        FROM SNOrder o
+                                        WHERE o.OrderId = 7262
+                                        FOR JSON PATH
+                                        ";
+                    }
+                    var command = new SqlCommand(query, conn);
+                    command.Parameters.AddWithValue("@OrderId", orderId);
 
-                    using var reader = await cmd.ExecuteReaderAsync();
+                    using var reader = await command.ExecuteReaderAsync();
 
                     if (await reader.ReadAsync())
                     {
@@ -401,7 +432,7 @@ namespace document_viewer_demo.Controllers
 
             return jsonRes;
         }
-        
+
         public DataTable GetOrderDataFromDb(int orderId)
         {
             Console.WriteLine("Retrieving order info from database for OrderId: " + orderId);
@@ -421,10 +452,10 @@ namespace document_viewer_demo.Controllers
                                 WHERE o.OrderId = @OrderId
                                 ORDER BY ol.BundleID, Model";
 
-                    var cmd = new SqlCommand(query, conn);
+                    var command = new SqlCommand(query, conn);
 
-                    cmd.Parameters.AddWithValue("@OrderId", orderId);
-                    using (var reader = cmd.ExecuteReader())
+                    command.Parameters.AddWithValue("@OrderId", orderId);
+                    using (var reader = command.ExecuteReader())
                     {
                         resultTable.Load(reader);
                         Console.WriteLine("Total results rows: " + resultTable.Rows.Count);
