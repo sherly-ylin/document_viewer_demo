@@ -265,7 +265,7 @@ namespace document_viewer_demo.Controllers
                     using (ServerTextControl tx = new ServerTextControl())
                     {
                         SNOrder dbOrder = GetMappedOrderObj(orderIds[i]);
-                        string jsonData = await GetOrderDataJsonFromDb(orderIds[i]);
+                        string jsonData = await GetOrderDataJsonFromDb(orderIds[i], true);
 
                         // Console.WriteLine(JsonConvert.SerializeObject(dbOrder));
                         Console.WriteLine(jsonData);
@@ -279,37 +279,7 @@ namespace document_viewer_demo.Controllers
 
                         if (testBundle)
                         {
-                            Console.WriteLine("Processing bundles");
-                            var bundles = SplitOrderIntoBundles(dbOrder);
-                            foreach (OrderBundle bundle in bundles)
-                            {
-                                Console.WriteLine(JsonConvert.SerializeObject(bundle));
-
-                                using (ServerTextControl bundleTx = new ServerTextControl())
-                                {
-                                    bundleTx.Create();
-
-                                    bundleTx.Load("Documents/template_order_bundle.docx", StreamType.WordprocessingML, loadSettings);
-                                    using (MailMerge mailMerge = new MailMerge { TextComponent = bundleTx })
-                                    {
-                                        mailMerge.FormFieldMergeType = FormFieldMergeType.None;
-                                        mailMerge.MergeObject(bundle);
-                                    }
-
-
-                                    byte[] bundleBytes;
-                                    bundleTx.Save(out bundleBytes, BinaryStreamType.InternalUnicodeFormat);
-
-                                    Console.WriteLine("Appending document for OrderId: " + orderIds[i] + " bundle " + bundle.BundleID);
-                                    tx.Append(bundleBytes, BinaryStreamType.InternalUnicodeFormat, AppendSettings.None);
-                                    Console.WriteLine("Appending page break");
-                                    tx.Append("\f", StringStreamType.PlainText, AppendSettings.None);
-                                }
-                            }
-                            //Remove the last page break
-                            breakInd = tx.Find("\f", -1, FindOptions.Reverse);
-                            tx.Select(breakInd, 1);
-                            tx.Clear();
+                            tx.Load("Documents/template_order_bundle.docx", StreamType.WordprocessingML, loadSettings);
                         }
                         else
                         {
@@ -358,7 +328,7 @@ namespace document_viewer_demo.Controllers
         }
 
         // Keep your existing GetOrderFromDb method unchanged
-        public async Task<string> GetOrderDataJsonFromDb(int orderId)
+        public async Task<string> GetOrderDataJsonFromDb(int orderId, bool byBundle = false)
         {
             Console.WriteLine("Retrieving order info from database for OrderId: " + orderId);
 
@@ -371,7 +341,10 @@ namespace document_viewer_demo.Controllers
                 {
                     // ,BundleQuantity, PerBundleQuantity, BundleOrder, ol.SeqNbr
                     var query = @"SELECT o.OrderID, o.CustomerName, o.SubTotalAmount TotalSellPrice,  o.DTCreated, 
-		                            CONCAT(TRIM(o.BillingAddress1), ' ', TRIM(o.BillingAddress2), ' ' , TRIM(o.BillingCity), ', ', TRIM(o.BillingState),' ' , TRIM(o.BillingPostalCode)) BillingAddress,
+		                            CONCAT(
+                                        TRIM(o.BillingAddress1), ' ', TRIM(o.BillingAddress2), ' ' , 
+                                        TRIM(o.BillingCity), ', ', TRIM(o.BillingState),' ' , TRIM(o.BillingPostalCode)
+                                    ) AS BillingAddress,
                                     (SELECT ol.OrderLineId, ol.Model, ol.SellPrice, ol.Quantity, ol.LineTotal, BundleID
                                     FROM SNOrderLine ol WHERE o.OrderId = ol.OrderId
                                     ORDER BY ol.OrderID, ol.BundleID
@@ -379,7 +352,32 @@ namespace document_viewer_demo.Controllers
                                 FROM SNOrder o 
                                 WHERE o.OrderId = @OrderId
                                 FOR JSON PATH;";
+                    // if (byBundle)
+                    // {
+                    //     query = @"SELECT o.OrderID, o.CustomerName, o.SubTotalAmount AS TotalSellPrice, o.DTCreated,
+                    //                     CONCAT(
+                    //                         TRIM(o.BillingAddress1), ' ', TRIM(o.BillingAddress2), ' ', 
+                    //                         TRIM(o.BillingCity), ', ', TRIM(o.BillingState), ' ', 
+                    //                         TRIM(o.BillingPostalCode)
+                    //                     ) AS BillingAddress,
+                    //                     (SELECT ol.BundleID, SUM(ol.LineTotal) AS BundleTotal,
+                    //                         (SELECT ol2.OrderLineId, TRIM(ol2.Model) AS Model, ol2.SellPrice, ol2.Quantity, ol2.LineTotal
+                    //                             FROM SNOrderLine ol2
+                    //                             WHERE ol2.OrderId = o.OrderId AND ol2.BundleID = ol.BundleID
+                    //                             FOR JSON PATH
+                    //                         ) AS OrderLines
+                    //                         FROM SNOrderLine ol
+                    //                         WHERE ol.OrderId = o.OrderId
+                    //                         GROUP BY ol.BundleID
+                    //                         FOR JSON PATH
+                    //                     ) AS OrderBundle
+                    //                     FROM SNOrder o
+                    //                     WHERE o.OrderId = 7262
+                    //                     FOR JSON PATH
+                    //                     ";
+                    // }
                     var cmd = new SqlCommand(query, conn);
+                    // var cmd = new SqlCommand(queryBundle, conn);
                     cmd.Parameters.AddWithValue("@OrderId", orderId);
 
                     using var reader = await cmd.ExecuteReaderAsync();
@@ -390,22 +388,6 @@ namespace document_viewer_demo.Controllers
                         Console.WriteLine("jsonRes:");
                         Console.WriteLine(jsonRes);
                     }
-
-
-                    // var query = @"SELECT o.OrderID, o.CustomerName, o.BillingAddress1, o.BillingAddress2, o.BillingCity, o.BillingState, o.BillingPostalCode, o.DTCreated,
-                    //             ol.OrderLineId, ol.Model, ol.BundleID, ol.SellPrice, ol.Quantity, ol.LineTotal FROM SNOrder o 
-                    //             JOIN SNOrderLine ol on o.OrderId = ol.OrderId
-                    //             WHERE o.OrderId = @OrderId
-                    //             ORDER BY ol.BundleID, Model";
-
-                    // var cmd = new SqlCommand(query, conn);
-
-                    // cmd.Parameters.AddWithValue("@OrderId", orderId);
-                    // using (var reader = cmd.ExecuteReader())
-                    // {
-                    //     resultTable.Load(reader);
-                    //     Console.WriteLine("Total results rows: " + resultTable.Rows.Count);
-                    // }
                 }
                 catch (Exception ex)
                 {
@@ -419,7 +401,7 @@ namespace document_viewer_demo.Controllers
 
             return jsonRes;
         }
-        // Keep your existing GetOrderFromDb method unchanged
+        
         public DataTable GetOrderDataFromDb(int orderId)
         {
             Console.WriteLine("Retrieving order info from database for OrderId: " + orderId);
