@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using TXTextControl;
 using TXTextControl.DocumentServer;
 using Microsoft.Data.SqlClient;
+using System.Threading.Tasks;
 
 namespace document_viewer_demo.Controllers
 {
@@ -23,7 +24,7 @@ namespace document_viewer_demo.Controllers
             _logger = logger;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
             try
             {
@@ -39,8 +40,11 @@ namespace document_viewer_demo.Controllers
                     _logger.LogInformation("Document not found in session, generating new document");
                     // Generate and store in session
                     // generatedDocumentBase64 = LoadDocument("Documents/sample.docx", StreamType.WordprocessingML);
-
-                    generatedDocumentBase64 = LoadTemplateAndMergeMultipleOrders(orderIds);
+                    // foreach (int orderId in orderIds)
+                    // {
+                    //     await GetOrderDataJsonFromDb(orderId);
+                    // }
+                    generatedDocumentBase64 = await LoadTemplateAndMergeMultipleOrders(orderIds);
                     // generatedDocumentBase64 = LoadTemplateAndMergeMultipleOrders(orderIds);
 
                     HttpContext.Session.SetString(sessionKey, generatedDocumentBase64);
@@ -246,7 +250,7 @@ namespace document_viewer_demo.Controllers
             }
         }
 
-        private string LoadTemplateAndMergeMultipleOrders(List<int> orderIds)
+        private async Task<string> LoadTemplateAndMergeMultipleOrders(List<int> orderIds)
         {
             Console.WriteLine("=== Merging multiple orders: " + string.Join(", ", orderIds));
             using (ServerTextControl masterTx = new ServerTextControl())
@@ -256,14 +260,15 @@ namespace document_viewer_demo.Controllers
 
                 for (int i = 0; i < orderIds.Count; i++)
                 {
-                    Console.WriteLine("Processing OrderId: " + orderIds[i]);
+                    Console.WriteLine("=====Processing OrderId: " + orderIds[i]);
+
                     using (ServerTextControl tx = new ServerTextControl())
                     {
                         SNOrder dbOrder = GetMappedOrderObj(orderIds[i]);
-                        string jsonData = GetMappedOrderJson(orderIds[i]);
+                        string jsonData = await GetOrderDataJsonFromDb(orderIds[i]);
 
-                        Console.WriteLine(JsonConvert.SerializeObject(dbOrder));
-                        // Console.WriteLine(jsonData);
+                        // Console.WriteLine(JsonConvert.SerializeObject(dbOrder));
+                        Console.WriteLine(jsonData);
                         tx.Create();
 
                         var loadSettings = new LoadSettings
@@ -313,7 +318,7 @@ namespace document_viewer_demo.Controllers
                             {
                                 mailMerge.FormFieldMergeType = FormFieldMergeType.None;
                                 // mailMerge.MergeObject(dbOrder);
-                                mailMerge.MergeObject(jsonData);
+                                mailMerge.MergeJsonData(jsonData);
                             }
                         }
 
@@ -353,6 +358,68 @@ namespace document_viewer_demo.Controllers
         }
 
         // Keep your existing GetOrderFromDb method unchanged
+        public async Task<string> GetOrderDataJsonFromDb(int orderId)
+        {
+            Console.WriteLine("Retrieving order info from database for OrderId: " + orderId);
+
+            string connectionString = "Server=192.168.20.97;Database=SalesChain0602_MS_MN;User Id=ylin;Password=9244@Wahg;TrustServerCertificate=True;";
+            string jsonRes = string.Empty;
+            using (var conn = new Microsoft.Data.SqlClient.SqlConnection(connectionString))
+            {
+                await conn.OpenAsync();
+                try
+                {
+                    // ,BundleQuantity, PerBundleQuantity, BundleOrder, ol.SeqNbr
+                    var query = @"SELECT o.OrderID, o.CustomerName, o.SubTotalAmount TotalSellPrice,  o.DTCreated, 
+		                            CONCAT(TRIM(o.BillingAddress1), ' ', TRIM(o.BillingAddress2), ' ' , TRIM(o.BillingCity), ', ', TRIM(o.BillingState),' ' , TRIM(o.BillingPostalCode)) BillingAddress,
+                                    (SELECT ol.OrderLineId, ol.Model, ol.SellPrice, ol.Quantity, ol.LineTotal, BundleID
+                                    FROM SNOrderLine ol WHERE o.OrderId = ol.OrderId
+                                    ORDER BY ol.OrderID, ol.BundleID
+                                    FOR JSON PATH) AS OrderLines
+                                FROM SNOrder o 
+                                WHERE o.OrderId = @OrderId
+                                FOR JSON PATH;";
+                    var cmd = new SqlCommand(query, conn);
+                    cmd.Parameters.AddWithValue("@OrderId", orderId);
+
+                    using var reader = await cmd.ExecuteReaderAsync();
+
+                    if (await reader.ReadAsync())
+                    {
+                        jsonRes = reader.GetString(0);
+                        Console.WriteLine("jsonRes:");
+                        Console.WriteLine(jsonRes);
+                    }
+
+
+                    // var query = @"SELECT o.OrderID, o.CustomerName, o.BillingAddress1, o.BillingAddress2, o.BillingCity, o.BillingState, o.BillingPostalCode, o.DTCreated,
+                    //             ol.OrderLineId, ol.Model, ol.BundleID, ol.SellPrice, ol.Quantity, ol.LineTotal FROM SNOrder o 
+                    //             JOIN SNOrderLine ol on o.OrderId = ol.OrderId
+                    //             WHERE o.OrderId = @OrderId
+                    //             ORDER BY ol.BundleID, Model";
+
+                    // var cmd = new SqlCommand(query, conn);
+
+                    // cmd.Parameters.AddWithValue("@OrderId", orderId);
+                    // using (var reader = cmd.ExecuteReader())
+                    // {
+                    //     resultTable.Load(reader);
+                    //     Console.WriteLine("Total results rows: " + resultTable.Rows.Count);
+                    // }
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("Error retrieving order info: " + ex.Message, ex);
+                }
+                finally
+                {
+                    conn.Close();
+                }
+            }
+
+            return jsonRes;
+        }
+        // Keep your existing GetOrderFromDb method unchanged
         public DataTable GetOrderDataFromDb(int orderId)
         {
             Console.WriteLine("Retrieving order info from database for OrderId: " + orderId);
@@ -371,6 +438,7 @@ namespace document_viewer_demo.Controllers
                                 JOIN SNOrderLine ol on o.OrderId = ol.OrderId
                                 WHERE o.OrderId = @OrderId
                                 ORDER BY ol.BundleID, Model";
+
                     var cmd = new SqlCommand(query, conn);
 
                     cmd.Parameters.AddWithValue("@OrderId", orderId);
