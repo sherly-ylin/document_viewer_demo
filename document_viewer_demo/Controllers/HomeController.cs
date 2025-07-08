@@ -7,6 +7,7 @@ using TXTextControl;
 using TXTextControl.DocumentServer;
 using Microsoft.Data.SqlClient;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace document_viewer_demo.Controllers
 {
@@ -36,19 +37,19 @@ namespace document_viewer_demo.Controllers
 
                 Console.WriteLine("=====> Session Key: " + sessionKey);
                 // Try to get from session first
-                string generatedDocumentBase64 = HttpContext.Session.GetString(sessionKey);
+                string docBase64 = HttpContext.Session.GetString(sessionKey);
 
-                if (string.IsNullOrEmpty(generatedDocumentBase64))
+                if (string.IsNullOrEmpty(docBase64))
                 {
                     _logger.LogInformation("Document not found in session, generating new document");
                     // Generate and store in session
 
-                    generatedDocumentBase64 = Convert.ToBase64String(System.IO.File.ReadAllBytes("Documents/Order Breakdown w Credits.pdf"));
-                    // generatedDocumentBase64 = GetDocumentBytes("Documents/Order Breakdown w Credits.rtf", StreamType.RichTextFormat);
-                    // generatedDocumentBase64 = await LoadTemplateAndMergeMultipleOrders(orderIds);
-                    // generatedDocumentBase64 = LoadTemplateAndMergeMultipleOrders(orderIds);
+                    // docBase64 = Convert.ToBase64String(System.IO.File.ReadAllBytes("Documents/OBDWC - Copy.docx"));
+                    docBase64 = GetDocumentBytes("Documents/OBDWC - Copy.docx", StreamType.WordprocessingML);
+                    // docBase64 = await LoadTemplateAndMergeMultipleOrders(orderIds);
+                    // docBase64 = LoadTemplateAndMergeMultipleOrders(orderIds);
 
-                    HttpContext.Session.SetString(sessionKey, generatedDocumentBase64);
+                    HttpContext.Session.SetString(sessionKey, docBase64);
                 }
                 else
                 {
@@ -56,7 +57,7 @@ namespace document_viewer_demo.Controllers
                 }
 
                 ViewBag.HasDocument = true;
-                ViewBag.DocumentData = generatedDocumentBase64;
+                ViewBag.DocumentData = docBase64;
                 ViewBag.SessionKey = sessionKey;
                 ViewBag.DocumentName = $"Merged_Orders_{DateTime.Now:yyyyMMdd_HHmmss}.docx";
             }
@@ -79,22 +80,63 @@ namespace document_viewer_demo.Controllers
             return RedirectToAction("Index");
         }
 
-        private string GetDocumentBytes(string filePath, StreamType streamType)
+        void ConvertToMergeFields(ServerTextControl tx)
         {
-            using (ServerTextControl tx = new ServerTextControl())
+            string pattern = @"\{\{(.*?)\}\}";
+            var regex = new Regex(pattern);
+
+            // Move to the start of the document
+            tx.Select(0, 0);
+            var count = 0;
+            Console.WriteLine(tx.Text);
+            Console.WriteLine($"Input Posisition {tx.InputPosition}");
+            while (regex.IsMatch(tx.Text) && count < 2)
             {
-                tx.Create();
+                count++;
+                Console.WriteLine("Match {}");
+                var match = regex.Match(tx.Text);
+                Console.WriteLine(match);
+                if (match.Success)
+                {
+                    Console.WriteLine("match success");
+                    string placeholder = match.Groups[0].Value; // e.g., {{OR.OrderID}}
+                    string fieldName = match.Groups[1].Value;    // e.g., OR.OrderID
 
-                LoadTemplate(tx, filePath, streamType);
-                // SectionCollection sections = tx.Sections;
-                // Console.WriteLine("number of sections: " + sections.Count);
+                    Console.WriteLine($"{placeholder}-{fieldName}");
 
-                byte[] bytes;
-                tx.Save(out bytes, BinaryStreamType.InternalUnicodeFormat);
-                return Convert.ToBase64String(bytes);
+                    int start = tx.Text.IndexOf(placeholder);
+                    Console.WriteLine($"start {start}/{placeholder.Length}");
+                    if (start < 0) break;
+
+                    tx.Select(start, placeholder.Length);
+                    tx.Clear(); // remove old text
+                                // tx.Select(0, 0);
+                    Console.WriteLine($"Input Posisition {tx.InputPosition}");
+
+                    tx.Select(start, start);
+                    Console.WriteLine($"- Select Start / Input Posisition {tx.InputPosition}");
+
+                    ApplicationField field
+                    = new ApplicationField(ApplicationFieldFormat.MSWord,
+                    "MERGEFIELD",
+                    fieldName,
+                    [fieldName]);
+                    tx.ApplicationFields.Add(field);
+
+                    // TXTextControl.DocumentServer.Fields.MergeField mergeField =
+                    // new TXTextControl.DocumentServer.Fields.MergeField()
+                    // {
+                    //     Text = fieldName,
+                    //     Name = fieldName,
+                    //     TextBefore = ""
+                    // };
+                    // tx.ApplicationFields.Add(mergeField.ApplicationField);
+                }
+                // break;
             }
         }
-        public IActionResult DownloadSelectedPages(int[] pageNumbers, string sessionKey)
+
+        public IActionResult DownloadSelectedPages(int[] pageNumbers, string fileName, string sessionKey)
         {
             try
             {
@@ -109,20 +151,20 @@ namespace document_viewer_demo.Controllers
                 }
 
                 // Get the document from session
-                string generatedDocumentBase64 = HttpContext.Session.GetString(sessionKey);
-                if (string.IsNullOrEmpty(generatedDocumentBase64))
+                string docBase64 = HttpContext.Session.GetString(sessionKey);
+                if (string.IsNullOrEmpty(docBase64))
                 {
                     return BadRequest("Document no longer available in session. Please refresh the page to regenerate the document.");
                 }
 
                 _logger.LogInformation($"Downloading selected pages: {string.Join(", ", pageNumbers)}");
 
-                byte[] documentBytes = Convert.FromBase64String(generatedDocumentBase64);
+                byte[] documentBytes = Convert.FromBase64String(docBase64);
                 byte[] selectedPagesBytes = ExtractSelectedPages(documentBytes, pageNumbers);
                 byte[] pdfBytes = ConvertToPdf(selectedPagesBytes);
 
-                string fileName = $"selected_pages_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
-                return File(pdfBytes, "application/pdf", fileName);
+                // string fileName = $"selected_pages_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                return File(pdfBytes, "application/pdf", $"{fileName}.pdf");
             }
             catch (Exception ex)
             {
@@ -141,15 +183,15 @@ namespace document_viewer_demo.Controllers
         //         }
 
         //         // Get the document from session
-        //         string generatedDocumentBase64 = HttpContext.Session.GetString(sessionKey);
-        //         if (string.IsNullOrEmpty(generatedDocumentBase64))
+        //         string docBase64 = HttpContext.Session.GetString(sessionKey);
+        //         if (string.IsNullOrEmpty(docBase64))
         //         {
         //             return BadRequest("Document no longer available in session. Please refresh the page to regenerate the document.");
         //         }
 
         //         _logger.LogInformation("Downloading full document as PDF");
 
-        //         byte[] documentBytes = Convert.FromBase64String(generatedDocumentBase64);
+        //         byte[] documentBytes = Convert.FromBase64String(docBase64);
         //         byte[] pdfBytes = ConvertToPdf(documentBytes);
 
         //         string fileName = $"merged_orders_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
@@ -162,7 +204,14 @@ namespace document_viewer_demo.Controllers
         //     }
         // }
 
-
+        public void GetPageNumbers(ServerTextControl tx)
+        {
+            PageCollection pages = tx.GetPages();
+            for (int i = 0; i < pages.Count; i++)
+            {
+                Console.WriteLine($"page {i}/ {pages[i].Number}");
+            }
+        }
         private byte[] ExtractSelectedPages(byte[] documentBytes, int[] pageNumbers)
         {
             using (ServerTextControl sourceTx = new ServerTextControl())
@@ -176,7 +225,7 @@ namespace document_viewer_demo.Controllers
 
                     // Sort page numbers to maintain order
                     Array.Sort(pageNumbers);
-                    var pages = sourceTx.GetPages();
+                    PageCollection pages = sourceTx.GetPages();
                     var pageLengths = Enumerable.Range(0, pages.Count)
                         .Select(i => pages.GetItem(i).Length).ToList();
 
@@ -188,14 +237,14 @@ namespace document_viewer_demo.Controllers
                     for (int i = 1; i <= pageLengths.Count; i++)
                     {
                         var indexPageBreak = sourceTx.Find("\f", pageStartPositions[i - 1], FindOptions.MatchWholeWord);
-                        // Console.WriteLine($"Page break found at index: {indexPageBreak}");
+                        Console.WriteLine($"Page break found at index: {indexPageBreak}");
                         pageStartPositions.Add(indexPageBreak + 1);
                     }
 
 
-                    // Console.WriteLine("Total pages in document: " + pages.Count);
-                    // Console.WriteLine("Page lengths: " + string.Join(", ", pageLengths));
-                    // Console.WriteLine("Page start positions: " + string.Join(", ", pageStartPositions));
+                    Console.WriteLine("Total pages in document: " + pages.Count);
+                    Console.WriteLine("Page lengths: " + string.Join(", ", pageLengths));
+                    Console.WriteLine("Page start positions: " + string.Join(", ", pageStartPositions));
 
                     for (int i = 0; i < pageNumbers.Length; i++)
                     {
@@ -207,7 +256,8 @@ namespace document_viewer_demo.Controllers
                         var page = pages.GetItem(pageNumbers[i] - 1); // Pages are 0-indexed
                         // Console.WriteLine($"Extracting page {pageNumbers[i]}: Start={pageStartPositions[pageNumbers[i] - 1]}, End={pageStartPositions[pageNumbers[i]] - pageStartPositions[pageNumbers[i] - 1] - 1}, Length={page.Length}");
 
-                        sourceTx.Select(pageStartPositions[pageNumbers[i] - 1], pageStartPositions[pageNumbers[i]] - pageStartPositions[pageNumbers[i] - 1]);
+                        // sourceTx.Select(pageStartPositions[pageNumbers[i] - 1], pageStartPositions[pageNumbers[i]] - pageStartPositions[pageNumbers[i] - 1]);
+                        // sourceTx.Select(page, pageStartPositions[pageNumbers[i]] - pageStartPositions[pageNumbers[i] - 1]);
 
                         byte[] pageContent;
                         sourceTx.Selection.Save(out pageContent, BinaryStreamType.InternalUnicodeFormat);
@@ -245,6 +295,46 @@ namespace document_viewer_demo.Controllers
                 return pdfBytes;
             }
         }
+
+        private string GetDocumentBytes(string filePath, StreamType streamType)
+        {
+            using (ServerTextControl tx = new ServerTextControl())
+            {
+                tx.Create();
+
+                LoadTemplate(tx, filePath, streamType);
+                // PageCollection pages = tx.GetPages();
+                // for (int i = 0; i < pages.Count; i++)
+                // {
+                //     Console.WriteLine($"page {i}/ {pages.GetItem(i).Start}/ {pages.GetItem(i).Length}/ {pages.GetItem(i).Footer}");
+                // }
+                tx.Select(200, tx.Text.Length - 200);
+                tx.Clear();
+
+                using (MailMerge mailMerge = new MailMerge { TextComponent = tx })
+                {
+                    string jsonData = System.IO.File.ReadAllText("Documents/jsonData.json");
+                    Console.WriteLine(jsonData);
+                    mailMerge.MergeJsonData(jsonData);
+
+                }
+                ConvertToMergeFields(tx);
+                // SectionCollection sections = tx.Sections;
+                // Console.WriteLine("number of sections: " + sections.Count);
+
+                // var loadSettings = new LoadSettings
+                // {
+                //     ApplicationFieldFormat = ApplicationFieldFormat.MSWord,
+                //     LoadSubTextParts = true
+                // };
+
+                // tx.Load(filePath, streamType, loadSettings);
+
+                byte[] bytes;
+                tx.Save(out bytes, BinaryStreamType.InternalUnicodeFormat);
+                return Convert.ToBase64String(bytes);
+            }
+        }
         private void LoadTemplate(ServerTextControl tx, string fp, StreamType streamType = StreamType.AllFormats)
         {
 
@@ -257,11 +347,11 @@ namespace document_viewer_demo.Controllers
                 ".tx" => StreamType.InternalUnicodeFormat,
                 _ => StreamType.WordprocessingML
             };
-            Console.WriteLine(formatStr);
+            Console.WriteLine(streamType);
 
             var loadSettings = new LoadSettings
             {
-                // ApplicationFieldFormat = ApplicationFieldFormat.MSWord,
+                ApplicationFieldFormat = ApplicationFieldFormat.MSWord
                 // LoadSubTextParts = true
             };
 
