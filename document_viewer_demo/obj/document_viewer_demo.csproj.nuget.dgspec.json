@@ -55,13 +55,17 @@
               "target": "Package",
               "version": "[6.0.2, )"
             },
+            "Microsoft.Office.Interop.Word": {
+              "target": "Package",
+              "version": "[15.0.4797.1004, )"
+            },
             "TXTextControl.TextControl.Core.SDK": {
               "target": "Package",
               "version": "[33.0.1, )"
             },
             "TXTextControl.Web.DocumentViewer": {
               "target": "Package",
-              "version": "[33.1.0, )"
+              "version": "[33.2.0, )"
             }
           },
           "imports": [

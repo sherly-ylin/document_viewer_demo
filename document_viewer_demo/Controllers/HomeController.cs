@@ -31,6 +31,12 @@ namespace document_viewer_demo.Controllers
         {
             try
             {
+                // Console.WriteLine(Directory.GetCurrentDirectory());
+                // string fp = $"C:/Users/ylin/SalesChain Save/2025/Document Generation Process/Prototype/document_viewer_demo/document_viewer_demo/Documents/OBDWC.docx";
+                // TemplateConverter converter = new TemplateConverter($"{Directory.GetCurrentDirectory()}\\Documents\\OBDWC.docx");
+                // converter.ConvertMergeFields();
+                // Console.WriteLine("Conversion Done");
+
                 // string sessionKey = $"merged_document_{string.Join("_", orderIds)}";
                 string sessionKey = $"sc_document_{DateTime.Now}";
                 Console.WriteLine(sessionKey);
@@ -45,7 +51,7 @@ namespace document_viewer_demo.Controllers
                     // Generate and store in session
 
                     // docBase64 = Convert.ToBase64String(System.IO.File.ReadAllBytes("Documents/OBDWC - Copy.docx"));
-                    docBase64 = GetDocumentBytes("Documents/OBDWC - Copy.docx", StreamType.WordprocessingML);
+                    docBase64 = GetDocumentBytes("Documents/OBDWC_updated.docx", StreamType.WordprocessingML);
                     // docBase64 = await LoadTemplateAndMergeMultipleOrders(orderIds);
                     // docBase64 = LoadTemplateAndMergeMultipleOrders(orderIds);
 
@@ -308,17 +314,26 @@ namespace document_viewer_demo.Controllers
                 // {
                 //     Console.WriteLine($"page {i}/ {pages.GetItem(i).Start}/ {pages.GetItem(i).Length}/ {pages.GetItem(i).Footer}");
                 // }
-                tx.Select(200, tx.Text.Length - 200);
-                tx.Clear();
+                // tx.Select(200, tx.Text.Length - 200);
+                // tx.Clear();
 
-                using (MailMerge mailMerge = new MailMerge { TextComponent = tx })
-                {
-                    string jsonData = System.IO.File.ReadAllText("Documents/jsonData.json");
-                    Console.WriteLine(jsonData);
-                    mailMerge.MergeJsonData(jsonData);
+                // using (MailMerge mailMerge = new MailMerge { TextComponent = tx })
+                // {
+                //     string jsonData = System.IO.File.ReadAllText("Documents/jsonData.json");
+                //     Console.WriteLine(jsonData);
+                //     mailMerge.MergeJsonData(jsonData);
 
-                }
-                ConvertToMergeFields(tx);
+                // }
+                // tx.Select(0, 0);
+                // ApplicationField field
+                //     = new ApplicationField(ApplicationFieldFormat.MSWord,
+                //     "MERGEFIELD",
+                //     "NewField",
+                //     ["NewField"]);
+                // tx.ApplicationFields.Add(field);
+
+
+                // ConvertToMergeFields(tx);
                 // SectionCollection sections = tx.Sections;
                 // Console.WriteLine("number of sections: " + sections.Count);
 

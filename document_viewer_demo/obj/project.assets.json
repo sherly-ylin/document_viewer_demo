@@ -425,6 +425,15 @@
           "lib/netstandard1.0/_._": {}
         }
       },
+      "Microsoft.Office.Interop.Word/15.0.4797.1004": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard2.0/Microsoft.Office.Interop.Word.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.Office.Interop.Word.dll": {}
+        }
+      },
       "Microsoft.SqlServer.Server/1.0.0": {
         "type": "package",
         "compile": {
@@ -2190,7 +2199,7 @@
           }
         }
       },
-      "TXTextControl.Web.DocumentViewer/33.1.0": {
+      "TXTextControl.Web.DocumentViewer/33.2.0": {
         "type": "package",
         "dependencies": {
           "Newtonsoft.Json": "13.0.1",
@@ -2832,6 +2841,19 @@
         "microsoft.netcore.targets.1.1.0.nupkg.sha512",
         "microsoft.netcore.targets.nuspec",
         "runtime.json"
+      ]
+    },
+    "Microsoft.Office.Interop.Word/15.0.4797.1004": {
+      "sha512": "lavTOrMGK/o/t3+gGr7JuVrL8XDdnS0DwPLcYv/StOiysXO4L0C36IXTVtEJo1Mh9Aoxo9a8dgGcPi+faTlv0g==",
+      "type": "package",
+      "path": "microsoft.office.interop.word/15.0.4797.1004",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net20/Microsoft.Office.Interop.Word.dll",
+        "lib/netstandard2.0/Microsoft.Office.Interop.Word.dll",
+        "microsoft.office.interop.word.15.0.4797.1004.nupkg.sha512",
+        "microsoft.office.interop.word.nuspec"
       ]
     },
     "Microsoft.SqlServer.Server/1.0.0": {
@@ -5442,19 +5464,20 @@
         "txtextcontrol.textcontrol.core.sdk.nuspec"
       ]
     },
-    "TXTextControl.Web.DocumentViewer/33.1.0": {
-      "sha512": "POkeLr0UKayfGsyZZREET1ES6XpJBmSnptlUFJXc1Jhjzz9ucX3JhFIQpWRt+XgaxD9Pc/hU7doeWtF7mLa4iA==",
+    "TXTextControl.Web.DocumentViewer/33.2.0": {
+      "sha512": "IqyyPRzfpWImRKMsAQOF2m1Y36f2rSRJic/XAM4pOE7mro2Wf0Dm3Yddty73Vmp7kJT8r+oRhEWiztaR6TrBKQ==",
       "type": "package",
-      "path": "txtextcontrol.web.documentviewer/33.1.0",
+      "path": "txtextcontrol.web.documentviewer/33.2.0",
       "files": [
         ".nupkg.metadata",
+        ".signature.p7s",
         "LICENSE.md",
         "lib/net45/TXTextControl.Web.MVC.DocumentViewer.dll",
         "lib/net45/TXTextControl.Web.MVC.DocumentViewer.xml",
         "lib/netcoreapp3.1/TXTextControl.Web.MVC.DocumentViewer.dll",
         "lib/netcoreapp3.1/TXTextControl.Web.MVC.DocumentViewer.xml",
         "tx33.png",
-        "txtextcontrol.web.documentviewer.33.1.0.nupkg.sha512",
+        "txtextcontrol.web.documentviewer.33.2.0.nupkg.sha512",
         "txtextcontrol.web.documentviewer.nuspec"
       ]
     }
@@ -5462,8 +5485,9 @@
   "projectFileDependencyGroups": {
     "net8.0": [
       "Microsoft.Data.SqlClient >= 6.0.2",
+      "Microsoft.Office.Interop.Word >= 15.0.4797.1004",
       "TXTextControl.TextControl.Core.SDK >= 33.0.1",
-      "TXTextControl.Web.DocumentViewer >= 33.1.0"
+      "TXTextControl.Web.DocumentViewer >= 33.2.0"
     ]
   },
   "packageFolders": {
@@ -5521,13 +5545,17 @@
             "target": "Package",
             "version": "[6.0.2, )"
           },
+          "Microsoft.Office.Interop.Word": {
+            "target": "Package",
+            "version": "[15.0.4797.1004, )"
+          },
           "TXTextControl.TextControl.Core.SDK": {
             "target": "Package",
             "version": "[33.0.1, )"
           },
           "TXTextControl.Web.DocumentViewer": {
             "target": "Package",
-            "version": "[33.1.0, )"
+            "version": "[33.2.0, )"
           }
         },
         "imports": [
