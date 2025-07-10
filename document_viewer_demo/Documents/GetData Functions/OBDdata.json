@@ -1,0 +1,59 @@
+[{
+    "OR": {
+        "TypeOfObject": "",
+        "OrderID": "" ,
+        "SalesRep": "",
+        "TypeOfSale" : "",
+        "DTClosed" : "",
+        "BillingOMDCustomerNbr" : "",
+        "BillingCustomerName" : "",
+        "BillingAddressLabel" : "",
+        "BillingContactName" : "",
+        "BillingContactPhoneNbr" : "",
+        "BillingContactCellNbr" : "",
+        "BillingContactEmailAddr" : "",
+        "CustomerPO" : "",
+        "CSMPCreditName" : "",
+
+        "BASEGPAMT" : "",
+        "TotalMSRP" : "",
+        "BUYTOTALPCT" : "",
+        "CSMPAMTALL" : "",
+        "SubTotalSellPrice" : "",
+
+        "TotalSellPrice" : "",
+        "Note" : "",
+        "LeaseProduct" : "",
+        "LeaseFactor" : "",
+        "PaymentNbrFin" : "",
+        "BASELEASEPAYMENT" : "",
+        "MaintBasePayment" : "",
+        "PaymentAmtMonthlyFin" : ""
+    },
+    "CU": {
+        "PhoneNbr": ""
+    },
+    "OJ": {
+        "CUSTOMERNBR": "",
+        "COMPANYNAME": "",
+        "ADDRESSLABEL": "",
+        "PRIMARYPHONE": ""
+    },
+    "B1": [
+        {
+            "ItemNbr": "",
+            "MODEL-DESCRIPTION": "",
+            "Qty": "",
+            "OL.PriceLevel": "",
+            "MSRP": "",
+            "RepCost": "",
+            "OL.CSMPAMTALL": "",
+            "SellPriceEa": "",
+            "TotalSell": ""
+        },
+        {}
+    ],
+    "QA":{
+        
+    }
+}]

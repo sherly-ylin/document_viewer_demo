@@ -222,3 +222,4 @@ C:\Users\ylin\SalesChain Save\2025\Document Generation Process\Prototype\documen
 C:\Users\ylin\SalesChain Save\2025\Document Generation Process\Prototype\document_viewer_demo\document_viewer_demo\bin\Debug\net8.0\Microsoft.Office.Interop.Word.dll
 C:\Users\ylin\SalesChain Save\2025\Document Generation Process\Prototype\document_viewer_demo\document_viewer_demo\bin\Debug\net8.0\Microsoft.Office.Interop.Outlook.dll
 C:\Users\ylin\SalesChain Save\2025\Document Generation Process\Prototype\document_viewer_demo\document_viewer_demo\bin\Debug\net8.0\office.dll
+C:\Users\ylin\SalesChain Save\2025\Document Generation Process\Prototype\document_viewer_demo\document_viewer_demo\bin\Debug\net8.0\Documents\GetData Functions\data.json

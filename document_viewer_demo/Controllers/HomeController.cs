@@ -33,9 +33,11 @@ namespace document_viewer_demo.Controllers
             {
                 // Console.WriteLine(Directory.GetCurrentDirectory());
                 // string fp = $"C:/Users/ylin/SalesChain Save/2025/Document Generation Process/Prototype/document_viewer_demo/document_viewer_demo/Documents/OBDWC.docx";
-                // TemplateConverter converter = new TemplateConverter($"{Directory.GetCurrentDirectory()}\\Documents\\OBDWC.docx");
+                TemplateConverter converter = new TemplateConverter($"{Directory.GetCurrentDirectory()}\\Documents\\OBDWC.docx");
                 // converter.ConvertMergeFields();
-                // Console.WriteLine("Conversion Done");
+                // converter.ExtractMergeFields();
+                converter.ConvertQueryJson("Documents/GetData Functions/GetData.txt");
+                Console.WriteLine("Extraction Done");
 
                 // string sessionKey = $"merged_document_{string.Join("_", orderIds)}";
                 string sessionKey = $"sc_document_{DateTime.Now}";
@@ -314,16 +316,16 @@ namespace document_viewer_demo.Controllers
                 // {
                 //     Console.WriteLine($"page {i}/ {pages.GetItem(i).Start}/ {pages.GetItem(i).Length}/ {pages.GetItem(i).Footer}");
                 // }
-                // tx.Select(200, tx.Text.Length - 200);
-                // tx.Clear();
+                tx.Select(200, tx.Text.Length - 200);
+                tx.Clear();
 
-                // using (MailMerge mailMerge = new MailMerge { TextComponent = tx })
-                // {
-                //     string jsonData = System.IO.File.ReadAllText("Documents/jsonData.json");
-                //     Console.WriteLine(jsonData);
-                //     mailMerge.MergeJsonData(jsonData);
+                using (MailMerge mailMerge = new MailMerge { TextComponent = tx })
+                {
+                    string jsonData = System.IO.File.ReadAllText("Documents/jsonData.json");
+                    Console.WriteLine(jsonData);
+                    mailMerge.MergeJsonData(jsonData);
 
-                // }
+                }
                 // tx.Select(0, 0);
                 // ApplicationField field
                 //     = new ApplicationField(ApplicationFieldFormat.MSWord,

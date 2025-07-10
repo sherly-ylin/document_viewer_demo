@@ -53,10 +53,64 @@ namespace document_viewer_demo.Controllers
                 while (currentRange != null);
             }
 
-            doc.SaveAs2(docPath.Replace(".docx", "_updated.docx"));
+            doc.SaveAs2("C:\\OBD_updated.docx");
             doc.Close(false);
             wordApp.Quit();
 
+        }
+
+        public void ExtractMergeFields()
+        {
+            var wordApp = new Word.Application();
+            var doc = wordApp.Documents.Open(docPath);
+            wordApp.Visible = false;
+
+            var regex = new Regex(@"\{\{(.*?)\}\}");
+            var fieldNames = new List<string>();
+
+            foreach (Word.Range range in doc.StoryRanges)
+            {
+                Word.Range currentRange = range;
+                Console.WriteLine("======== new word range");
+                do
+                {
+                    var matches = regex.Matches(currentRange.Text);
+                    foreach (Match match in matches)
+                    {
+                        string fieldName = match.Groups[1].Value.Trim();
+                        fieldNames.Add(fieldName);
+                    }
+
+                    currentRange = currentRange.NextStoryRange;
+                }
+                while (currentRange != null);
+            }
+
+            doc.Close(false);
+
+            // Create new doc to save field names
+            var newDoc = wordApp.Documents.Add();
+            Word.Paragraph para = newDoc.Content.Paragraphs.Add();
+
+            foreach (string name in fieldNames)
+            {
+                Console.WriteLine(name);
+
+                para.Range.InsertBefore(name + "\n");
+            }
+
+            newDoc.SaveAs2(docPath.Replace(".docx", "_fields.docx"));
+            newDoc.Close();
+            wordApp.Quit();
+        }
+
+        public void ConvertQueryJson(string filePath)
+        {
+            string data = System.IO.File.ReadAllText(filePath);
+            var beginRegex = new Regex(@"\<(.*?)\>");
+            var closeRegex = new Regex(@"\<\/(.*?)\>");
+
+            
         }
     }
 }
