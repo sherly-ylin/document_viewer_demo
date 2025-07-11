@@ -457,4 +457,4 @@ SELECT '<OR.ACCESSORIES>' + dbo.fn_FormatXMLChars(isnull((select stuff((select '
             LEFT JOIN SNDMPaymentTerms as DMB with (nolock) on DMB.DMPaymentTermsID = OD.DMPaymentTermsID
             LEFT JOIN SNCreditApplication as CA with (nolock) on CA.OrderID = OD.OrderID AND CA.SelectedSource = -1
             LEFT JOIN SNFinanceCompany as CFC with (nolock) on CFC.FCOID = CA.FCOID
-            LEFT JOIN SNTravelCategory as TC with (nolock) on TC.TravelCategoryID = OD.TravelCategoryID";
+            LEFT JOIN SNTravelCategory as TC with (nolock) on TC.TravelCategoryID = OD.TravelCategoryID

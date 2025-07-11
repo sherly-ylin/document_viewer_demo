@@ -36,8 +36,10 @@ namespace document_viewer_demo.Controllers
                 TemplateConverter converter = new TemplateConverter($"{Directory.GetCurrentDirectory()}\\Documents\\OBDWC.docx");
                 // converter.ConvertMergeFields();
                 // converter.ExtractMergeFields();
-                converter.ConvertQueryJson("Documents/GetData Functions/GetData.txt");
+                converter.ConvertQueryJson("Documents/GetData Functions/ORDataQuery.txt");
                 Console.WriteLine("Extraction Done");
+
+                // GetORDataDb(7262);
 
                 // string sessionKey = $"merged_document_{string.Join("_", orderIds)}";
                 string sessionKey = $"sc_document_{DateTime.Now}";
@@ -566,6 +568,43 @@ namespace document_viewer_demo.Controllers
                     {
                         resultTable.Load(reader);
                         Console.WriteLine("Total results rows: " + resultTable.Rows.Count);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("Error retrieving order info: " + ex.Message, ex);
+                }
+                finally
+                {
+                    conn.Close();
+                }
+            }
+
+            return resultTable;
+        }
+        public DataTable GetORDataDb(int orderId)
+        {
+            Console.WriteLine("Retrieving order info from database for OrderId: " + orderId);
+            
+
+            string connectionString = "Server=192.168.20.97;Database=SalesChain0602_MS_MN;User Id=ylin;Password=9244@Wahg;TrustServerCertificate=True;";
+            DataTable resultTable = new DataTable();
+
+            using (var conn = new Microsoft.Data.SqlClient.SqlConnection(connectionString))
+            {
+                conn.Open();
+                try
+                {
+                    var query = System.IO.File.ReadAllText("Documents/GetData Functions/ORDataQuery_processed.txt");
+                    query += "WHERE OD.OrderId = @OrderId";
+                    var command = new SqlCommand(query, conn);
+
+                    command.Parameters.AddWithValue("@OrderId", orderId);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        resultTable.Load(reader);
+                        Console.WriteLine("Total results rows: " + resultTable.Rows.Count);
+                        Console.Write(JsonConvert.SerializeObject(resultTable));
                     }
                 }
                 catch (Exception ex)

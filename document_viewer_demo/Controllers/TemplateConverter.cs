@@ -107,10 +107,30 @@ namespace document_viewer_demo.Controllers
         public void ConvertQueryJson(string filePath)
         {
             string data = System.IO.File.ReadAllText(filePath);
-            var beginRegex = new Regex(@"\<(.*?)\>");
-            var closeRegex = new Regex(@"\<\/(.*?)\>");
+            var beginRegex = new Regex(@"\+\s\'\<(OR.*?)\>\'\s\+");
+            var beginRegex2 = new Regex(@" \'\<(OR.*?)\>\'\s*\+");
+            var closeRegex = new Regex(@"\+\s\'\<\/(OR\..*?)\>\'");
+            var closeRegex2 = new Regex(@"\+\s\'\<\/(OR.*?)\>\'\s*\+");
+            var ORRegex = new Regex(@"(OR\.)");
+            var PlusRegex = new Regex(@"\+\s");
+            var formatRegex = new Regex(@"(dbo\.fn_FormatCurrency\((.*?)\))");
+            var formatRegex2 = new Regex(@"(dbo\.fn_FormatXMLChars\((.*?)\))");
+            var formatRegex3 = new Regex(@"(dbo\.fn_formatnumber\((.*?)\))");
+            // Remove any text that matches beginRegex
+            data = beginRegex2.Replace(data, "");
 
-            
+            // Replace any text that matches closeRegex with the text inside the tag
+            // data = formatRegex.Replace(data, m => m.Groups[1].Value);
+            // data = formatRegex2.Replace(data, m => m.Groups[1].Value);
+            // data = formatRegex3.Replace(data, m => m.Groups[1].Value);
+            data = closeRegex2.Replace(data, m => $"AS {m.Groups[1].Value}, \n\t");
+            // data = ORRegex.Replace(data, "AS ");
+
+            Console.WriteLine(data);
+
+            string outputPath = filePath.Replace(".txt", "_processed.txt");
+            System.IO.File.WriteAllText(outputPath, data);
+            Console.WriteLine($"Processed data saved to {outputPath}");
         }
     }
 }
