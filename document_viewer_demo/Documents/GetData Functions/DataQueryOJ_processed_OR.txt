@@ -1,0 +1,40 @@
+SELECT CAST(ROW_NUMBER() OVER(ORDER BY DJ.DeliveryJobCount) as nvarchar) AS 'OJ.INDEX', 
+	cast(DJ.OrderID as nvarchar) + '-' + cast(DJ.DeliveryJobCount as nvarchar) AS 'OJ.NUMBER', 
+	 cast(DJ.DeliveryJobCount as nvarchar) AS 'OJ.COUNT', 
+	 dbo.fn_FormatXMLChars(ISNULL(CU.OMDCustomerNbr,isnull(BCU.OMDCustomerNbr,'')))  AS 'OJ.CUSTOMERNBR', 
+	 dbo.fn_FormatXMLChars(ISNULL(DJ.CustomerName,''))  AS 'OJ.COMPANYNAME', 
+	 dbo.fn_FormatXMLChars(cast(ISNULL(DJ.AddressLabel,'') as nvarchar(max)))  AS 'OJ.ADDRESSLABEL', 
+	 dbo.fn_FormatXMLChars(ISNULL(LO.Address1,''))  AS 'OJ.ADDRESS1', 
+	 dbo.fn_FormatXMLChars(ISNULL(LO.Address2,''))  AS 'OJ.ADDRESS2', 
+	 dbo.fn_FormatXMLChars(ISNULL(LO.City,''))  AS 'OJ.ADDRESSCITY', 
+	 dbo.fn_FormatXMLChars(ISNULL(LO.StateCode,''))  AS 'OJ.ADDRESSSTATE', 
+	 dbo.fn_FormatXMLChars(ISNULL(LO.PostalCode,''))  AS 'OJ.ADDRESSPOSTALCODE', 
+	 dbo.fn_FormatXMLChars(case when len(LO.City) > 0 then LO.Address1 + case when LEN(LO.Address2) > 0 then ' ' + LO.Address2 else '' end  + ', ' +  LO.City + ', ' + LO.StateCode + ' ' + LO.PostalCode else '' end) AS 'OJ.ADDRESSONELINE', 
+	 dbo.fn_FormatXMLChars(isnull(case when DJ.PriContactSelect = -101 then OD.BillingContactName else DJ.PriContactName end,'')) AS 'OJ.PRIMARYCONTACTNAME', 
+	 dbo.fn_FormatXMLChars(isnull(case when DJ.PriContactSelect = -101 then case when OD.BillToContactSelect > 0 then (SELECT Title FROM SNContact with (nolock) WHERE ContactID = OD.BillToContactSelect) else '' end else PC.Title end,'')) AS 'OJ.PRIMARYCONTACTTITLE', 
+	 dbo.fn_FormatPhoneNumber(case when DJ.PriContactSelect = -101 then OD.BillingContactPhoneNbr else DJ.PriContactPhone end) + case when DJ.PriContactSelect = -101 then case when isnull(OD.BillingContactPhoneExt,'') <> '' then 'x' + isnull(OD.BillingContactPhoneExt,'') else '' end else case when isnull(DJ.PriContactPhoneExt,'') <> '' then 'x' + isnull(DJ.PriContactPhoneExt,'') else '' end end AS 'OJ.PRIMARYPHONE', 
+	 dbo.fn_FormatPhoneNumber(case when DJ.PriContactSelect = -101 then OD.BillingContactFaxNbr else DJ.PriContactFax end) AS 'OJ.PRICONTACTFAX', 
+	 dbo.fn_FormatPhoneNumber(case when DJ.PriContactSelect = -101 then OD.BillingContactCellNbr else DJ.PriContactCell end) AS 'OJ.PRICONTACTCELL', 
+	 dbo.fn_FormatXMLChars(isnull(case when DJ.PriContactSelect = -101 then OD.BillingContactEmailAddr else DJ.PriContactEmail end,'')) AS 'OJ.PRICONTACTEMAIL', 
+	 dbo.fn_FormatXMLChars(isnull(case when DJ.ITContactSelect = -101 then OD.BillingContactName else DJ.ITContactName end,'')) AS 'OJ.ITCONTACTNAME', 
+	 dbo.fn_FormatXMLChars(isnull(case when DJ.ITContactSelect = -101 then case when OD.BillToContactSelect > 0 then (SELECT Title FROM SNContact with (nolock) WHERE ContactID = OD.BillToContactSelect) else '' end else IC.Title end,'')) AS 'OJ.ITCONTACTTITLE', 
+	 dbo.fn_FormatPhoneNumber(case when DJ.ITContactSelect = -101 then OD.BillingContactPhoneNbr else DJ.ITContactPhone end) + case when DJ.ITContactSelect = -101 then case when isnull(OD.BillingContactPhoneExt,'') <> '' then 'x' + isnull(OD.BillingContactPhoneExt,'') else '' end else case when isnull(DJ.ITContactPhoneExt,'') <> '' then 'x' + isnull(DJ.ITContactPhoneExt,'') else '' end end AS 'OJ.ITPHONE', 
+	 dbo.fn_FormatPhoneNumber(case when DJ.ITContactSelect = -101 then OD.BillingContactFaxNbr else DJ.ITContactFax end) AS 'OJ.ITCONTACTFAX', 
+	 dbo.fn_FormatPhoneNumber(case when DJ.ITContactSelect = -101 then OD.BillingContactCellNbr else DJ.ITContactCell end) AS 'OJ.ITCONTACTCELL', 
+	 dbo.fn_FormatXMLChars(isnull(case when DJ.ITContactSelect = -101 then OD.BillingContactEmailAddr else DJ.ITContactEmail end,'')) AS 'OJ.ITCONTACTEMAIL', 
+	 dbo.fn_FormatXMLChars(isnull(case when DJ.MeterContactSelect = -101 then OD.BillingContactName else (SELECT isnull(FirstName,'') FROM SNPerson with (nolock) WHERE PersonID = MC.PersonID) + ' ' + (SELECT isnull(LastName,'') FROM SNPerson with (nolock) WHERE PersonID = MC.PersonID) end,'')) AS 'OJ.METERCONTACTNAME', 
+	 dbo.fn_FormatXMLChars(isnull(case when DJ.MeterContactSelect = -101 then case when OD.BillToContactSelect > 0 then (SELECT Title FROM SNContact with (nolock) WHERE ContactID = OD.BillToContactSelect) else '' end else MC.Title end,'')) AS 'OJ.METERCONTACTTITLE', 
+	 dbo.fn_FormatPhoneNumber(case when DJ.MeterContactSelect = -101 then OD.BillingContactPhoneNbr else MC.RPTOfficePhone end) + case when DJ.MeterContactSelect = -101 then case when isnull(OD.BillingContactPhoneExt,'') <> '' then 'x' + isnull(OD.BillingContactPhoneExt,'') else '' end else case when isnull(MC.RPTOfficePhoneExt,'') <> '' then 'x' + isnull(MC.RPTOfficePhoneExt,'') else '' end end AS 'OJ.METERPHONE', 
+	 dbo.fn_FormatPhoneNumber(case when DJ.MeterContactSelect = -101 then OD.BillingContactFaxNbr else MC.RPTFaxPhone end) AS 'OJ.METERCONTACTFAX', 
+	 dbo.fn_FormatPhoneNumber(case when DJ.MeterContactSelect = -101 then OD.BillingContactCellNbr else MC.RPTCellPhone end) AS 'OJ.METERCONTACTCELL', 
+	 dbo.fn_FormatXMLChars(isnull(case when DJ.MEterContactSelect = -101 then OD.BillingContactEmailAddr else MC.RPTEmailAddress end,'')) AS 'OJ.METERCONTACTEMAIL'
+ FROM SNDeliveryJob as DJ with (nolock)
+ JOIN SNOrder as OD with (nolock) on OD.OrderID = DJ.OrderID
+ LEFT JOIN SNCustomer as CU with (nolock) on CU.CustomerID = DJ.CustomerSelect
+ LEFT JOIN SNCustomer as BCU with (nolock) on BCU.CustomerID = OD.BillToAccountSelect
+ LEFT JOIN SNEntityLocation as EL with (nolock) on EL.EntityID = DJ.EntityID AND EL.LocationTypeID = (SELECT LocationTypeID FROM SNLocationType with (nolock) WHERE SystemLabel = 'Company.Address')
+ LEFT JOIN SNLocation as LO with (nolock) on LO.LocationID = EL.LocationID
+ LEFT JOIN SNContact as PC with (nolock) on PC.ContactID = DJ.PriContactSelect
+ LEFT JOIN SNContact as IC with (nolock) on IC.ContactID = DJ.ITContactSelect
+ LEFT JOIN SNContact as MC with (nolock) on MC.ContactID = DJ.MeterContactSelect
+ Where DJ.OrderID = @OrderId;

@@ -10,15 +10,16 @@ namespace document_viewer_demo.Controllers
         public TemplateConverter(string dp)
         {
             docPath = dp;
-            Console.WriteLine("File path set");
         }
 
-        public void ConvertMergeFields()
+        public void ConvertMergeFields(string tagToRemove = "")
         {
-            Console.WriteLine("Entering [ConvertMergeFields]");
+            Console.WriteLine($"Entering [ConvertMergeFields] tagToRemove={tagToRemove}");         
             Console.WriteLine(docPath);
             var wordApp = new Word.Application();
+            Console.WriteLine("App created");
             var doc = wordApp.Documents.Open(docPath);
+            Console.WriteLine("Doc opened");
             wordApp.Visible = false;
 
             var regex = new Regex(@"\{\{(.*?)\}\}");
@@ -28,11 +29,15 @@ namespace document_viewer_demo.Controllers
                 Word.Range currentRange = range;
                 do
                 {
+                    Console.WriteLine("Searching...");
                     var matches = regex.Matches(currentRange.Text);
                     foreach (Match match in matches)
                     {
                         string fullTag = match.Groups[0].Value; // e.g. {{OR.OrderID}}
                         string fieldName = match.Groups[1].Value; // e.g. OR.OrderID
+                        var tagRegex = new Regex($@"({tagToRemove}\.)");
+                        fieldName = tagRegex.Replace(fieldName, "");
+                        Console.WriteLine(fieldName);
 
                         Word.Find find = currentRange.Find;
                         find.Text = fullTag;
@@ -53,12 +58,18 @@ namespace document_viewer_demo.Controllers
                 while (currentRange != null);
             }
 
-            doc.SaveAs2("C:\\OBD_updated.docx");
+            // doc.SaveAs2("C:\\OBD_updated.docx");
+            doc.SaveAs2(docPath.Replace(".docx", "_updated.docx"));
             doc.Close(false);
             wordApp.Quit();
 
         }
 
+        public string RemoveTag(string tag, string str)
+        {
+            var tagRegex = new Regex($@"({tag}\.)");
+            return tagRegex.Replace(str, "");
+        }
         public void ExtractMergeFields()
         {
             var wordApp = new Word.Application();
@@ -104,26 +115,26 @@ namespace document_viewer_demo.Controllers
             wordApp.Quit();
         }
 
-        public void ConvertQueryJson(string filePath)
+        public void ConvertQuery(string filePath, string tag)
         {
             string data = System.IO.File.ReadAllText(filePath);
             var beginRegex = new Regex(@"\+\s\'\<(OR.*?)\>\'\s\+");
-            var beginRegex2 = new Regex(@" \'\<(OR.*?)\>\'\s*\+");
-            var closeRegex = new Regex(@"\+\s\'\<\/(OR\..*?)\>\'");
-            var closeRegex2 = new Regex(@"\+\s\'\<\/(OR.*?)\>\'\s*\+");
-            var ORRegex = new Regex(@"(OR\.)");
-            var PlusRegex = new Regex(@"\+\s");
-            var formatRegex = new Regex(@"(dbo\.fn_FormatCurrency\((.*?)\))");
-            var formatRegex2 = new Regex(@"(dbo\.fn_FormatXMLChars\((.*?)\))");
-            var formatRegex3 = new Regex(@"(dbo\.fn_formatnumber\((.*?)\))");
-            // Remove any text that matches beginRegex
-            data = beginRegex2.Replace(data, "");
+            var closeRegex = new Regex(@"\+\s\'\<\/(OR.*?)\>\'");
 
-            // Replace any text that matches closeRegex with the text inside the tag
+            var beginRegex2 = new Regex(@$" \'\<({tag}.*?)\>\'\s*\+");
+            var closeRegex2 = new Regex(@$"\+\s\'\<\/({tag}.*?)\>\'\s*\+");
+            // var ORRegex = new Regex(@"(OR\.)");
+            // var PlusRegex = new Regex(@"\+\s");
+            // var formatRegex = new Regex(@"(dbo\.fn_FormatCurrency\((.*?)\))");
+            // var formatRegex2 = new Regex(@"(dbo\.fn_FormatXMLChars\((.*?)\))");
+            // var formatRegex3 = new Regex(@"(dbo\.fn_formatnumber\((.*?)\))");
+
             // data = formatRegex.Replace(data, m => m.Groups[1].Value);
             // data = formatRegex2.Replace(data, m => m.Groups[1].Value);
             // data = formatRegex3.Replace(data, m => m.Groups[1].Value);
-            data = closeRegex2.Replace(data, m => $"AS {m.Groups[1].Value}, \n\t");
+            data = beginRegex2.Replace(data, "");
+            data = closeRegex2.Replace(data, m => $"AS '{m.Groups[1].Value}', \n\t");
+            // data = closeRegex.Replace(data, m => $"AS '{m.Groups[1].Value}', \n\t");
             // data = ORRegex.Replace(data, "AS ");
 
             Console.WriteLine(data);

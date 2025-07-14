@@ -8,6 +8,7 @@ using TXTextControl.DocumentServer;
 using Microsoft.Data.SqlClient;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json.Linq;
 
 namespace document_viewer_demo.Controllers
 {
@@ -31,13 +32,10 @@ namespace document_viewer_demo.Controllers
         {
             try
             {
-                // Console.WriteLine(Directory.GetCurrentDirectory());
-                // string fp = $"C:/Users/ylin/SalesChain Save/2025/Document Generation Process/Prototype/document_viewer_demo/document_viewer_demo/Documents/OBDWC.docx";
-                TemplateConverter converter = new TemplateConverter($"{Directory.GetCurrentDirectory()}\\Documents\\OBDWC.docx");
-                // converter.ConvertMergeFields();
+                // TemplateConverter converter = new TemplateConverter($"{Directory.GetCurrentDirectory()}\\Documents\\OBDWC.docx");
+                // converter.ConvertMergeFields(tagToRemove: "OR");
                 // converter.ExtractMergeFields();
-                converter.ConvertQueryJson("Documents/GetData Functions/ORDataQuery.txt");
-                Console.WriteLine("Extraction Done");
+                // converter.ConvertQuery("Documents/GetData Functions/DataQueryOJ.txt", "OJ");
 
                 // GetORDataDb(7262);
 
@@ -55,7 +53,7 @@ namespace document_viewer_demo.Controllers
                     // Generate and store in session
 
                     // docBase64 = Convert.ToBase64String(System.IO.File.ReadAllBytes("Documents/OBDWC - Copy.docx"));
-                    docBase64 = GetDocumentBytes("Documents/OBDWC_updated.docx", StreamType.WordprocessingML);
+                    docBase64 = await GetDocumentBytes("Documents/OBDWC_updated_v1.docx", StreamType.WordprocessingML);
                     // docBase64 = await LoadTemplateAndMergeMultipleOrders(orderIds);
                     // docBase64 = LoadTemplateAndMergeMultipleOrders(orderIds);
 
@@ -306,7 +304,7 @@ namespace document_viewer_demo.Controllers
             }
         }
 
-        private string GetDocumentBytes(string filePath, StreamType streamType)
+        private async Task<string> GetDocumentBytes(string filePath, StreamType streamType)
         {
             using (ServerTextControl tx = new ServerTextControl())
             {
@@ -318,12 +316,22 @@ namespace document_viewer_demo.Controllers
                 // {
                 //     Console.WriteLine($"page {i}/ {pages.GetItem(i).Start}/ {pages.GetItem(i).Length}/ {pages.GetItem(i).Footer}");
                 // }
-                tx.Select(200, tx.Text.Length - 200);
-                tx.Clear();
+                // tx.Select(200, tx.Text.Length - 200);
+                // tx.Clear();
 
                 using (MailMerge mailMerge = new MailMerge { TextComponent = tx })
                 {
-                    string jsonData = System.IO.File.ReadAllText("Documents/jsonData.json");
+                    // string jsonData = System.IO.File.ReadAllText("Documents/jsonData.json");
+                    
+                    var resOR = await GetMergeDataORAsync(7262);
+                    var resOJ = await GetMergeDataOJAsync(7262);
+                    var resORJSON = JsonConvert.SerializeObject(resOR);
+                    var resOJJSON = JsonConvert.SerializeObject(resOJ);
+                    var arrOR = JArray.Parse(resORJSON);
+                    var arrOJ = JArray.Parse(resOJJSON);
+
+                    arrOR.Merge(arrOJ);
+                    string jsonData = arrOR.ToString();
                     Console.WriteLine(jsonData);
                     mailMerge.MergeJsonData(jsonData);
 
@@ -582,30 +590,90 @@ namespace document_viewer_demo.Controllers
 
             return resultTable;
         }
-        public DataTable GetORDataDb(int orderId)
+        public async Task<DataTable> GetMergeDataORAsync(int orderId)
         {
-            Console.WriteLine("Retrieving order info from database for OrderId: " + orderId);
-            
-
             string connectionString = "Server=192.168.20.97;Database=SalesChain0602_MS_MN;User Id=ylin;Password=9244@Wahg;TrustServerCertificate=True;";
             DataTable resultTable = new DataTable();
-
-            using (var conn = new Microsoft.Data.SqlClient.SqlConnection(connectionString))
+            using (var conn = new SqlConnection(connectionString))
             {
                 conn.Open();
                 try
                 {
-                    var query = System.IO.File.ReadAllText("Documents/GetData Functions/ORDataQuery_processed.txt");
-                    query += "WHERE OD.OrderId = @OrderId";
+                    var query = System.IO.File.ReadAllText("Documents/GetData Functions/DataQueryOR_processed.txt");
+                    // query += "\nFOR JSON PATH";
                     var command = new SqlCommand(query, conn);
 
                     command.Parameters.AddWithValue("@OrderId", orderId);
                     using (var reader = command.ExecuteReader())
                     {
                         resultTable.Load(reader);
-                        Console.WriteLine("Total results rows: " + resultTable.Rows.Count);
-                        Console.Write(JsonConvert.SerializeObject(resultTable));
                     }
+                    // using var reader = await command.ExecuteReaderAsync();
+
+                    // if (await reader.ReadAsync())
+                    // {
+                    //     jsonRes = reader.GetString(0);
+                    //     Console.WriteLine("jsonRes:");
+                    //     Console.WriteLine(jsonRes);
+                    // }
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("Error retrieving order info: " + ex.Message, ex);
+                }
+                finally
+                {
+                    conn.Close();
+                }
+            }
+
+            return resultTable;
+        }
+        public async Task<DataTable> GetMergeDataOJAsync(int orderId)
+        {
+
+            string connectionString = "Server=192.168.20.97;Database=SalesChain0602_MS_MN;User Id=ylin;Password=9244@Wahg;TrustServerCertificate=True;";
+            DataTable resultTable = new DataTable();
+            using (var conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                try
+                {
+                    // originally clngObjectKey instead of orderId
+                    var query = $@"SELECT case when exists (select * from SNDeliveryJob with (nolock) 
+                                where OrderID = @OrderId) then IsOrderInd else 0 end as IsOrderInd 
+                                FROM SNOrder with(nolock) WHERE OrderID = @OrderId";
+
+                    var command = new SqlCommand(query, conn);
+                    command.Parameters.AddWithValue("@OrderId", orderId);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        resultTable.Load(reader);
+                        Console.WriteLine("Total results rows: " + resultTable.Rows.Count);
+                    }
+                    if (resultTable.Rows[0]["IsOrderInd"].ToString() == "-1")
+                    {
+                        query = System.IO.File.ReadAllText("Documents/GetData Functions/DataQueryOJ_processed_OR.txt");
+                    }
+                    else
+                    {
+                        query = System.IO.File.ReadAllText("Documents/GetData Functions/DataQueryOJ_processed.txt");
+                    }
+                    command = new SqlCommand(query, conn);
+                    command.Parameters.AddWithValue("@OrderId", orderId);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        resultTable.Load(reader);
+                        Console.WriteLine("Total results rows: " + resultTable.Rows.Count);
+                    }
+                    // using var reader = await command.ExecuteReaderAsync();
+
+                    // if (await reader.ReadAsync())
+                    // {
+                    //     jsonRes = reader.GetString(0);
+                    //     Console.WriteLine("jsonRes:");
+                    //     Console.WriteLine(jsonRes);
+                    // }
                 }
                 catch (Exception ex)
                 {
