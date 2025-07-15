@@ -75,4 +75,4 @@ SELECT '<OJ index=''' + CAST(ROW_NUMBER() OVER(ORDER BY OD.OrderID) as nvarchar)
  + '</OJ>'
  FROM SNOrder as OD with (nolock) 
  LEFT JOIN SNCustomer as CU with (nolock) on CU.CustomerID = OD.BillToAccountSelect
- Where OD.OrderID = @OrderId;
+ Where OD.OrderID = @ObjectKey

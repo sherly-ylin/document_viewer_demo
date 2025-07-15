@@ -9,6 +9,7 @@ using Microsoft.Data.SqlClient;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json.Linq;
+using Microsoft.IdentityModel.Tokens;
 
 namespace document_viewer_demo.Controllers
 {
@@ -33,9 +34,7 @@ namespace document_viewer_demo.Controllers
             try
             {
                 // TemplateConverter converter = new TemplateConverter($"{Directory.GetCurrentDirectory()}\\Documents\\OBDWC.docx");
-                // converter.ConvertMergeFields(tagToRemove: "OR");
-                // converter.ExtractMergeFields();
-                // converter.ConvertQuery("Documents/GetData Functions/DataQueryOJ.txt", "OJ");
+                // converter.ConvertQuery("Documents/GetData Functions/DataQueryOL.txt", "OL");
 
                 // GetORDataDb(7262);
 
@@ -144,6 +143,20 @@ namespace document_viewer_demo.Controllers
             }
         }
 
+
+        private byte[] ConvertToPdf(byte[] documentBytes)
+        {
+            using (ServerTextControl tx = new ServerTextControl())
+            {
+                tx.Create();
+                tx.Load(documentBytes, BinaryStreamType.InternalUnicodeFormat);
+
+                byte[] pdfBytes;
+                tx.Save(out pdfBytes, BinaryStreamType.AdobePDF);
+                return pdfBytes;
+            }
+        }
+
         public IActionResult DownloadSelectedPages(int[] pageNumbers, string fileName, string sessionKey)
         {
             try
@@ -212,14 +225,6 @@ namespace document_viewer_demo.Controllers
         //     }
         // }
 
-        public void GetPageNumbers(ServerTextControl tx)
-        {
-            PageCollection pages = tx.GetPages();
-            for (int i = 0; i < pages.Count; i++)
-            {
-                Console.WriteLine($"page {i}/ {pages[i].Number}");
-            }
-        }
         private byte[] ExtractSelectedPages(byte[] documentBytes, int[] pageNumbers)
         {
             using (ServerTextControl sourceTx = new ServerTextControl())
@@ -291,18 +296,7 @@ namespace document_viewer_demo.Controllers
                 }
             }
         }
-        private byte[] ConvertToPdf(byte[] documentBytes)
-        {
-            using (ServerTextControl tx = new ServerTextControl())
-            {
-                tx.Create();
-                tx.Load(documentBytes, BinaryStreamType.InternalUnicodeFormat);
 
-                byte[] pdfBytes;
-                tx.Save(out pdfBytes, BinaryStreamType.AdobePDF);
-                return pdfBytes;
-            }
-        }
 
         private async Task<string> GetDocumentBytes(string filePath, StreamType streamType)
         {
@@ -322,9 +316,10 @@ namespace document_viewer_demo.Controllers
                 using (MailMerge mailMerge = new MailMerge { TextComponent = tx })
                 {
                     // string jsonData = System.IO.File.ReadAllText("Documents/jsonData.json");
-                    
-                    var resOR = await GetMergeDataORAsync(7262);
-                    var resOJ = await GetMergeDataOJAsync(7262);
+
+                    var resOR = GetMergeDataOR(7262);
+                    var resOJ = GetMergeDataOJ(7262);
+                    var resOL = GetMergeDataOL(7262, "SNASP2097");
                     var resORJSON = JsonConvert.SerializeObject(resOR);
                     var resOJJSON = JsonConvert.SerializeObject(resOJ);
                     var arrOR = JArray.Parse(resORJSON);
@@ -332,7 +327,7 @@ namespace document_viewer_demo.Controllers
 
                     arrOR.Merge(arrOJ);
                     string jsonData = arrOR.ToString();
-                    Console.WriteLine(jsonData);
+                    // Console.WriteLine(jsonData);
                     mailMerge.MergeJsonData(jsonData);
 
                 }
@@ -362,112 +357,6 @@ namespace document_viewer_demo.Controllers
                 return Convert.ToBase64String(bytes);
             }
         }
-        private void LoadTemplate(ServerTextControl tx, string fp, StreamType streamType = StreamType.AllFormats)
-        {
-
-            fp = fp.Trim();
-            string formatStr = fp.Substring(fp.LastIndexOf('.'));
-            streamType = formatStr switch
-            {
-                ".pdf" => StreamType.AdobePDF,
-                ".rtf" => StreamType.RichTextFormat,
-                ".tx" => StreamType.InternalUnicodeFormat,
-                _ => StreamType.WordprocessingML
-            };
-            Console.WriteLine(streamType);
-
-            var loadSettings = new LoadSettings
-            {
-                ApplicationFieldFormat = ApplicationFieldFormat.MSWord
-                // LoadSubTextParts = true
-            };
-
-            tx.Load(fp, streamType, loadSettings);
-        }
-        private async Task<string> LoadTemplateAndMergeMultipleOrders(List<int> orderIds)
-        {
-            Console.WriteLine("=== Merging multiple orders: " + string.Join(", ", orderIds));
-            using (ServerTextControl masterTx = new ServerTextControl())
-            {
-                masterTx.Create();
-                var breakInd = -1;
-
-                for (int i = 0; i < orderIds.Count; i++)
-                {
-                    Console.WriteLine("=====Processing OrderId: " + orderIds[i]);
-
-                    using (ServerTextControl tx = new ServerTextControl())
-                    {
-                        SNOrder dbOrder = GetMappedOrderObj(orderIds[i]);
-                        string jsonData = await GetOrderDataJsonFromDb(orderIds[i], true);
-
-                        // Console.WriteLine(JsonConvert.SerializeObject(dbOrder));
-                        tx.Create();
-
-                        var loadSettings = new LoadSettings
-                        {
-                            ApplicationFieldFormat = ApplicationFieldFormat.MSWord,
-                            LoadSubTextParts = true
-                        };
-
-                        if (testBundle)
-                        {
-                            tx.Load("Documents/template_order_bundle.docx", StreamType.WordprocessingML, loadSettings);
-                        }
-                        else
-                        {
-                            tx.Load("Documents/template_order.docx", StreamType.WordprocessingML, loadSettings);
-
-                        }
-                        using (MailMerge mailMerge = new MailMerge { TextComponent = tx })
-                        {
-                            mailMerge.FormFieldMergeType = FormFieldMergeType.None;
-                            // mailMerge.MergeObject(dbOrder);
-                            mailMerge.MergeJsonData(jsonData);
-                        }
-
-                        byte[] bytes;
-                        tx.Save(out bytes, BinaryStreamType.InternalUnicodeFormat);
-
-                        // SectionCollection sections = masterTx.Sections;
-                        // Console.WriteLine("number of sections masterTX: " + sections.Count);
-
-                        Console.WriteLine("Appending document for OrderId: " + orderIds[i]);
-                        masterTx.Append(bytes, BinaryStreamType.InternalUnicodeFormat, AppendSettings.None);
-                        Console.WriteLine("Appending page break");
-                        masterTx.Append("\f", StringStreamType.PlainText, AppendSettings.None);
-
-                        // sections = masterTx.Sections;
-                        // Console.WriteLine("number of sections after appending: " + sections.Count);
-                        Console.WriteLine("number of pages: " + masterTx.Pages);
-                    }
-                }
-
-                //Remove the last page break
-                breakInd = masterTx.Find("\f", -1, FindOptions.Reverse);
-                masterTx.Select(breakInd, 1);
-                masterTx.Clear();
-
-                // Save the merged document to a byte array
-                byte[] documentBytes;
-                var saveSettings = new SaveSettings
-                {
-                    CreatorApplication = "Document Viewer Demo"
-                };
-
-                masterTx.Save(out documentBytes, BinaryStreamType.InternalUnicodeFormat, saveSettings);
-
-                return Convert.ToBase64String(documentBytes);
-            }
-        }
-
-        public string GetQuery()
-        {
-            var query = "";
-
-            return query;
-        }
-
         public async Task<byte[]> GetDocumentFromDB(int fileId)
         {
             using var connection = new SqlConnection(connectionString);
@@ -590,7 +479,7 @@ namespace document_viewer_demo.Controllers
 
             return resultTable;
         }
-        public async Task<DataTable> GetMergeDataORAsync(int orderId)
+        public DataTable GetMergeDataOR(int orderId)
         {
             string connectionString = "Server=192.168.20.97;Database=SalesChain0602_MS_MN;User Id=ylin;Password=9244@Wahg;TrustServerCertificate=True;";
             DataTable resultTable = new DataTable();
@@ -608,14 +497,6 @@ namespace document_viewer_demo.Controllers
                     {
                         resultTable.Load(reader);
                     }
-                    // using var reader = await command.ExecuteReaderAsync();
-
-                    // if (await reader.ReadAsync())
-                    // {
-                    //     jsonRes = reader.GetString(0);
-                    //     Console.WriteLine("jsonRes:");
-                    //     Console.WriteLine(jsonRes);
-                    // }
                 }
                 catch (Exception ex)
                 {
@@ -629,7 +510,7 @@ namespace document_viewer_demo.Controllers
 
             return resultTable;
         }
-        public async Task<DataTable> GetMergeDataOJAsync(int orderId)
+        public DataTable GetMergeDataOJ(int orderId)
         {
 
             string connectionString = "Server=192.168.20.97;Database=SalesChain0602_MS_MN;User Id=ylin;Password=9244@Wahg;TrustServerCertificate=True;";
@@ -649,31 +530,90 @@ namespace document_viewer_demo.Controllers
                     using (var reader = command.ExecuteReader())
                     {
                         resultTable.Load(reader);
-                        Console.WriteLine("Total results rows: " + resultTable.Rows.Count);
                     }
-                    if (resultTable.Rows[0]["IsOrderInd"].ToString() == "-1")
-                    {
-                        query = System.IO.File.ReadAllText("Documents/GetData Functions/DataQueryOJ_processed_OR.txt");
-                    }
-                    else
-                    {
-                        query = System.IO.File.ReadAllText("Documents/GetData Functions/DataQueryOJ_processed.txt");
-                    }
+
+                    query = resultTable.Rows[0]["IsOrderInd"].ToString() == "-1" ?
+                        System.IO.File.ReadAllText("Documents/GetData Functions/DataQueryOJ_processed_OR.txt") :
+                        System.IO.File.ReadAllText("Documents/GetData Functions/DataQueryOJ_processed.txt");
+
                     command = new SqlCommand(query, conn);
                     command.Parameters.AddWithValue("@OrderId", orderId);
                     using (var reader = command.ExecuteReader())
                     {
                         resultTable.Load(reader);
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("Error retrieving order info: " + ex.Message, ex);
+                }
+                finally
+                {
+                    conn.Close();
+                }
+            }
+
+            return resultTable;
+        }
+        public DataTable GetMergeDataOL(int orderId, string catalogServer)
+        {
+
+            string connectionString = "Server=192.168.20.97;Database=SalesChain0602_MS_MN;User Id=ylin;Password=9244@Wahg;TrustServerCertificate=True;";
+            DataTable resultTable = new DataTable();
+            string query = string.Empty;
+            SqlCommand command = null;
+            using (var conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                try
+                {
+                    if (catalogServer.IsNullOrEmpty())
+                    {
+                        query = "SELECT isnull(MasterCatalogServer,'') MasterCatalogServer FROM SCMaster.dbo.SNMasterSysParm with (nolock);";
+                        command = new SqlCommand(query, conn);
+                        using (var reader = command.ExecuteReader())
+                        {
+                            resultTable.Load(reader);
+                        }
+                        catalogServer = resultTable.Rows[0]["MasterCatalogServer"].ToString();
+                        Console.WriteLine($"catalogServer={catalogServer}");
+                    }
+                    string priceLevels = "";
+                    string priceLevelCmd = "";
+                    query = @"SELECT STRING_AGG('PRICELEVEL' + CAST(PriceLevelID AS NVARCHAR), ',') cols,
+                                STRING_AGG(
+                                    'CASE WHEN PRICELEVEL' + CAST(PriceLevelID AS NVARCHAR) + ' >= 0 ' +
+                                    'THEN dbo.fn_FormatCurrency(PRICELEVEL' + CAST(PriceLevelID AS NVARCHAR) + ') ' +
+                                    'ELSE '''' END AS ''OL.PRICELEVEL' + CAST(PriceLevelID AS NVARCHAR) + ''',',
+                                    CHAR(10)
+                                ) vals
+                                FROM SNPriceLevel WITH (NOLOCK)
+                                WHERE ISNULL(IsStandardInd, 0) = 0; ";
+                    command = new SqlCommand(query, conn);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        resultTable.Load(reader);
+                        priceLevels = resultTable.Rows[0]["cols"].ToString();
+                        priceLevelCmd = resultTable.Rows[0]["vals"].ToString();
+                        Console.WriteLine("===> priceLevels");
+                        Console.WriteLine(priceLevels);
+                        Console.WriteLine(priceLevelCmd);
+                    }
+
+                    query = System.IO.File.ReadAllText("Documents/GetData Functions/DataQueryOL_processed.txt");
+                    command = new SqlCommand(query, conn);
+                    command.Parameters.AddWithValue("@OrderId", orderId);
+                    command.Parameters.AddWithValue("@CatalogServer", catalogServer);
+                    command.Parameters.AddWithValue("@PriceLevelCols", priceLevels);
+                    command.Parameters.AddWithValue("@PriceLevels", priceLevelCmd);
+                    Console.WriteLine("=== CommandText ===");
+                    Console.WriteLine(command.CommandText);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        resultTable.Load(reader);
                         Console.WriteLine("Total results rows: " + resultTable.Rows.Count);
                     }
-                    // using var reader = await command.ExecuteReaderAsync();
-
-                    // if (await reader.ReadAsync())
-                    // {
-                    //     jsonRes = reader.GetString(0);
-                    //     Console.WriteLine("jsonRes:");
-                    //     Console.WriteLine(jsonRes);
-                    // }
                 }
                 catch (Exception ex)
                 {
@@ -728,6 +668,115 @@ namespace document_viewer_demo.Controllers
             string jsonData = JsonConvert.SerializeObject(resultTable);
             return jsonData;
         }
+
+        public void GetPageNumbers(ServerTextControl tx)
+        {
+            PageCollection pages = tx.GetPages();
+            for (int i = 0; i < pages.Count; i++)
+            {
+                Console.WriteLine($"page {i}/ {pages[i].Number}");
+            }
+        }
+
+        private void LoadTemplate(ServerTextControl tx, string fp, StreamType streamType = StreamType.AllFormats)
+        {
+
+            fp = fp.Trim();
+            string formatStr = fp.Substring(fp.LastIndexOf('.'));
+            streamType = formatStr switch
+            {
+                ".pdf" => StreamType.AdobePDF,
+                ".rtf" => StreamType.RichTextFormat,
+                ".tx" => StreamType.InternalUnicodeFormat,
+                _ => StreamType.WordprocessingML
+            };
+            Console.WriteLine(streamType);
+
+            var loadSettings = new LoadSettings
+            {
+                ApplicationFieldFormat = ApplicationFieldFormat.MSWord
+                // LoadSubTextParts = true
+            };
+
+            tx.Load(fp, streamType, loadSettings);
+        }
+        private async Task<string> LoadTemplateAndMergeMultipleOrders(List<int> orderIds)
+        {
+            Console.WriteLine("=== Merging multiple orders: " + string.Join(", ", orderIds));
+            using (ServerTextControl masterTx = new ServerTextControl())
+            {
+                masterTx.Create();
+                var breakInd = -1;
+
+                for (int i = 0; i < orderIds.Count; i++)
+                {
+                    Console.WriteLine("=====Processing OrderId: " + orderIds[i]);
+
+                    using (ServerTextControl tx = new ServerTextControl())
+                    {
+                        SNOrder dbOrder = GetMappedOrderObj(orderIds[i]);
+                        string jsonData = await GetOrderDataJsonFromDb(orderIds[i], true);
+
+                        // Console.WriteLine(JsonConvert.SerializeObject(dbOrder));
+                        tx.Create();
+
+                        var loadSettings = new LoadSettings
+                        {
+                            ApplicationFieldFormat = ApplicationFieldFormat.MSWord,
+                            LoadSubTextParts = true
+                        };
+
+                        if (testBundle)
+                        {
+                            tx.Load("Documents/template_order_bundle.docx", StreamType.WordprocessingML, loadSettings);
+                        }
+                        else
+                        {
+                            tx.Load("Documents/template_order.docx", StreamType.WordprocessingML, loadSettings);
+
+                        }
+                        using (MailMerge mailMerge = new MailMerge { TextComponent = tx })
+                        {
+                            mailMerge.FormFieldMergeType = FormFieldMergeType.None;
+                            // mailMerge.MergeObject(dbOrder);
+                            mailMerge.MergeJsonData(jsonData);
+                        }
+
+                        byte[] bytes;
+                        tx.Save(out bytes, BinaryStreamType.InternalUnicodeFormat);
+
+                        // SectionCollection sections = masterTx.Sections;
+                        // Console.WriteLine("number of sections masterTX: " + sections.Count);
+
+                        Console.WriteLine("Appending document for OrderId: " + orderIds[i]);
+                        masterTx.Append(bytes, BinaryStreamType.InternalUnicodeFormat, AppendSettings.None);
+                        Console.WriteLine("Appending page break");
+                        masterTx.Append("\f", StringStreamType.PlainText, AppendSettings.None);
+
+                        // sections = masterTx.Sections;
+                        // Console.WriteLine("number of sections after appending: " + sections.Count);
+                        Console.WriteLine("number of pages: " + masterTx.Pages);
+                    }
+                }
+
+                //Remove the last page break
+                breakInd = masterTx.Find("\f", -1, FindOptions.Reverse);
+                masterTx.Select(breakInd, 1);
+                masterTx.Clear();
+
+                // Save the merged document to a byte array
+                byte[] documentBytes;
+                var saveSettings = new SaveSettings
+                {
+                    CreatorApplication = "Document Viewer Demo"
+                };
+
+                masterTx.Save(out documentBytes, BinaryStreamType.InternalUnicodeFormat, saveSettings);
+
+                return Convert.ToBase64String(documentBytes);
+            }
+        }
+
 
         List<OrderBundle> SplitOrderIntoBundles(SNOrder order)
         {

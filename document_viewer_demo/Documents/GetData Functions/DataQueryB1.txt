@@ -1,0 +1,125 @@
+ SELECT cast(row_number() over(order  by t.rowtype, t.BundleID, t.rowid) as nvarchar) AS 'B1.INDEX'
+                 + '<B1.BUNDLENAME>' + dbo.fn_FormatXMLChars(isnull(t.BundleName,'')) + '</B1.BUNDLENAME>'
+                 + '<B1.CI_DESCRIPTION>' +  dbo.fn_FormatXMLChars(isnull(t.cdescription,'')) + '</B1.CI_DESCRIPTION>'
+                 + '<B1.DEALERCOST>' + dbo.fn_FormatCurrency(t.DealerCostAmt) + '</B1.DEALERCOST>'
+                 + '<B1.DEALERCOSTTOTAL>' + dbo.fn_FormatCurrency(t.DealerCostAmt * t.Quantity) + '</B1.DEALERCOSTTOTAL>'
+                 + '<B1.DESCRIPTION>' +  dbo.fn_FormatXMLChars(isnull(t.description,'')) + '</B1.DESCRIPTION>'
+                 + '<B1.EXTMSRP>' + dbo.fn_FormatCurrency(isnull(t.cMSRP,0) * t.Quantity) + '</B1.EXTMSRP>'
+                 + '<B1.GPAMT>' + dbo.fn_FormatCurrency(t.TotalGPAmt) + '</B1.GPAMT>'
+                 + '<B1.ITEMNBR>' +  dbo.fn_FormatXMLChars(isnull(t.itemnbr,'')) + '</B1.ITEMNBR>'
+                 + '<B1.PRODUCTCODE>' + dbo.fn_FormatXMLChars(isnull(t.prodcode,'')) + '</B1.PRODUCTCODE>'
+                 + '<B1.MANUALENTRYFLAG>' + t.manual + '</B1.MANUALENTRYFLAG>'
+                 + '<B1.MFG>' +  dbo.fn_FormatXMLChars(isnull(t.MFG,'')) + '</B1.MFG>'
+                 + '<B1.MODEL>' + dbo.fn_FormatXMLChars(isnull(t.Model,'')) + '</B1.MODEL>'
+                 + '<B1.MODEL-DESCRIPTION>' +  dbo.fn_FormatXMLChars(isnull(t.Model_Description,'')) + '</B1.MODEL-DESCRIPTION>'
+                 + '<B1.MSRP>' + dbo.fn_FormatCurrency(isnull(t.MSRP,0)) + '</B1.MSRP>'
+                 + '<B1.PERBUNDLEQTY>' + cast(isnull(t.PerBundleQuantity,0) as nvarchar) + '</B1.PERBUNDLEQTY>'
+                 + '<B1.QTY>' + cast(isnull(t.Quantity,0) as nvarchar) + '</B1.QTY>'
+                 + '<B1.REPCOST>' + dbo.fn_FormatCurrency(t.RepCostAmt) + '</B1.REPCOST>'
+                 + '<B1.REPCOSTTOTAL>' + dbo.fn_FormatCurrency(t.RepCostAmt * t.Quantity) + '</B1.REPCOSTTOTAL>'
+                 + '<B1.SELLPRICE>' + dbo.fn_FormatCurrency(t.SellPriceAmt) + '</B1.SELLPRICE>'
+                 + '<B1.SELLPRICEEA>' + dbo.fn_FormatCurrency(t.SellPriceAmt + t.orderlineadj) + '</B1.SELLPRICEEA>'
+                 + '<B1.SELLPRICEROLLUP>' + case when bundleorder = 1 then dbo.fn_FormatCurrency(t.rolledup/t.Quantity) else '' end + '</B1.SELLPRICEROLLUP>'
+                 + '<B1.TOTALSELL>' + dbo.fn_FormatCurrency(t.TotalSellAmt) + '</B1.TOTALSELL>'
+                 + '<B1.TOTALSELLROLLUP>' + case when bundleorder = 1 then dbo.fn_FormatCurrency(t.rolledup) else '' end + '</B1.TOTALSELLROLLUP>'
+                 + '<B1.SUBTOTAL>' + dbo.fn_FormatCurrency(t.subtotal) + '</B1.SUBTOTAL>'
+                 + '<B1.SUBTOTALROLLUP>' + dbo.fn_FormatCurrency(t.subtotalrollup) + '</B1.SUBTOTALROLLUP>'
+                 + '<B1.TYPE>' + case when t.rowtype = 1 then 'EQ' else 'IT' end + '</B1.TYPE>'
+             from (select *, sum(TotalSellAmt) over() subtotal, sum(case when bundleorder = 1 then rolledup else 0 end) over() subtotalrollup
+               from (select rowtype = 2
+                      , l.OrderITPLineID rowid
+                      , l.OrderITPLineID seq
+                      , l.Quantity
+                      , l.PerBundleQuantity
+                      , p.model
+                      , p.MFG
+                      , cast(p.Description as nvarchar(max)) description
+                      , cast(p.Description as nvarchar(max)) cdescription
+                      , case when (p.Model = cast(p.Description as nvarchar(max)) and cast(p.Description as nvarchar(max)) <> '') or (cast(p.Description as nvarchar(max)) <> '' and p.Model = '')
+                              then isnull(cast(p.Description as nvarchar(max)),'')
+                              else case when (cast(p.Description as nvarchar(max)) = '' and p.Model <> '') or (charindex(p.Model,cast(p.Description as nvarchar(max))) > 0)
+                                          then isnull(p.Model,'')
+                                          else isnull(p.Model,'') + ' - ' + isnull(cast(p.Description as nvarchar(max)),'')
+                                      end
+                          end Model_Description
+                      , p.SKU itemnbr
+                      , '' prodcode
+                      , p.MSRP cMSRP
+                      , l.MSRP
+                      , l.DealerCostAmt
+                      , l.RepCostAmt
+                      , l.SellPriceAmt
+                      , l.TotalSellAmt
+                      , l.TotalGPAmt
+                      , l.BundleID
+                      , isbundlparent = case when l.ITProductID = l.BundleParentITProductID  then 0 else 1 end
+                      , '' manual
+                      , 0 orderlineadj
+                      , l.BundleName
+                      , (select count(*) from SNOrderLine with (nolock) where OrderID = l.OrderID) eqcnt
+                      , (select sum(a.AdjAmount * case when t.CreditDebitInd = 'C' then -1 else 1 end) from SNOrderAdjustment a with (nolock) join SNOrderAdjType t with (nolock) on t.OrderAdjTypeID = a.OrderAdjTypeID where a.OrderID = l.OrderID and isnull(t.ApplyToAmtFinanced,0) = -1 and isnull(t.IsTradeIn,0) = 0 and isnull(t.IsSubTotal,0) = 0 and a.OrderAdjTypeID not in (select OrderAdjTypeID from SNOrderLineAdjust la with (nolock) join SNOrderLine l with (nolock) on l.OrderLineId = la.OrderLineID where l.OrderID = a.OrderID)) adjtotal
+                      , row_number() over(partition by l.BundleID order by l.OrderITPLineID) bundleorder
+                      , l.OrderID
+                      , (select sum(TotalSellAmt) from SNOrderITPLine with (nolock) where OrderID = l.OrderID and BundleID = l.BundleID) bundletotalsell
+                      , (select isnull(nullif(TotalSellPrice,0),1) from SNOrder with (nolock) where OrderID = l.OrderID) ordertotalsell
+                      , dbo.fn_GetMergedSellPriceCombined(l.OrderID, l.BundleID, 'ITP') rolledup
+                  from SNOrderITPLine l with (nolock)
+                  join SNITProducts p with (nolock) on p.ITProductID = l.ITProductID
+                  where l.OrderID = & clngObjectKey
+                      and isnull(l.ExcludeLeaseInd,0) <> -1 
+                        
+                  union
+                        
+                  select rowtype = 1
+                      , l.OrderLineId rowid
+                      , l.SeqNbr seq
+                      , l.Quantity
+                      , l.PerBundleQuantity
+                      , l.Model
+                      , l.MFGName mfg
+                      , cast(l.Description as nvarchar(max)) description
+                      , cast(c.Description as nvarchar(max)) cdescription
+                      , case when l.CatalogItemID <= -100
+                              then case when (l.Model = cast(l.Description as nvarchar(max)) and cast(l.Description as nvarchar(max)) <> '') or (cast(l.Description as nvarchar(max)) <> '' and l.Model = '')
+                                          then isnull(cast(l.Description as nvarchar(max)),'')
+                                          else case when (cast(l.Description as nvarchar(max)) = '' and l.Model = '') or (charindex(l.Model,cast(l.Description as nvarchar(max))) > 0)
+                                                      then isnull(l.Model,'')
+                                                      else isnull(l.Model,'') + ' - ' + isnull(cast(l.Description as nvarchar(max)),'')
+                                                  end
+                                      end
+                              else case when (c.Model = cast(c.Description as nvarchar(max)) and cast(c.Description as nvarchar(max)) <> '') or (cast(c.Description as nvarchar(max)) <> '' and c.Model = '')
+                                          then isnull(cast(c.Description as nvarchar(max)),'')
+                                          else case when (cast(c.Description as nvarchar(max)) = '' and c.Model <> '') or (charindex(c.Model,cast(c.Description as nvarchar(max))) > 0)
+                                                      then isnull(c.Model,'')
+                                                      else isnull(c.Model,'') + ' - ' + isnull(cast(c.Description as nvarchar(max)),'')
+                                                  end
+                                      end
+                          end Model_Description
+                      , case when l.CatalogItemID > 0 then isnull(replace(c.MFGItemNbr,'_',''),'') else isnull(l.MFGItemNbr,'') end itemnbr
+                      , isnull(c.OMDCode,'') prodcode
+                      , c.MFGPrice cMSRP
+                      , l.MSRP
+                      , l.DealerCostAmt
+                      , l.BuyPrice  repcostamt
+                      , l.SellPrice sellpriceamt
+                      , l.LineTotal totalsellamt
+                      , (l.SellPrice - l.BuyPrice) * l.quantity as totalgpamt
+                      , l.BundleID
+                      , isbundlparent = case when l.CatalogItemID  = l.BundleParentCatalogItemID then 0 else 1 end
+                      , case when l.CatalogItemID <=-100 then '*' else '' end manual
+                      , isnull((select sum(AdjAmount) from SNOrderLineAdjust with (nolock) where OrderLineId = l.OrderLineId),0) orderlineadj
+                      , l.BundleName
+                      , 0 eqcnt
+                      , 0 adjtotal
+                      , row_number() over(partition by l.BundleID order by l.SeqNbr) bundleorder
+                      , l.OrderID
+                      , 0 bundletotalsell
+                      , 0 ordertotalsell
+                      , dbo.fn_GetMergedSellPriceCombined(l.OrderID, l.BundleID, 'EQ') rolledup
+                  from snorderline l with (nolock)
+                  left join SNCatalogItem c with (nolock) on c.CatalogItemID = l.CatalogItemID
+                  where l.OrderID = & clngObjectKey
+                      and isnull(l.ServiceInd,0) = 0 
+                      and isnull(l.ExcludeLeaseInd,0) <> -1 
+             ) d) t
+             order by rowtype, bundleid, isbundlparent, rowid
