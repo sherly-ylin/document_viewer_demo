@@ -223,3 +223,4 @@ C:\Users\ylin\SalesChain Save\2025\Document Generation Process\Prototype\documen
 C:\Users\ylin\SalesChain Save\2025\Document Generation Process\Prototype\document_viewer_demo\document_viewer_demo\bin\Debug\net8.0\document_viewer_demo.pdb
 C:\Users\ylin\SalesChain Save\2025\Document Generation Process\Prototype\document_viewer_demo\document_viewer_demo\obj\Debug\net8.0\document_viewer_demo.genruntimeconfig.cache
 C:\Users\ylin\SalesChain Save\2025\Document Generation Process\Prototype\document_viewer_demo\document_viewer_demo\obj\Debug\net8.0\ref\document_viewer_demo.dll
+C:\Users\ylin\SalesChain Save\2025\Document Generation Process\Prototype\document_viewer_demo\document_viewer_demo\bin\Debug\net8.0\Documents\GetData Functions\temp.json

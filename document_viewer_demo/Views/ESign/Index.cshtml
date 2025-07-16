@@ -1,6 +1,13 @@
 ﻿@using TXTextControl.Web.MVC.DocumentViewer
 @using System.Text
 
+
+@{
+    ViewData["Title"] = "E-Sign";
+}
+<h1>@ViewData["Title"]</h1>
+
+
 @{
     ViewData["Title"] = "Document Viewer Demo";
 }
@@ -8,26 +15,28 @@
 <div class="viewer-container">
     @if (ViewBag.HasDocument != null && ViewBag.HasDocument)
     {
-        <div class="document-info">
-            <small class="text-muted">
-                <a href="@Url.Action("ClearCache", "Home")" class="btn btn-sm btn-outline-secondary ms-2">
-                    <i class="fas fa-refresh"></i> Refresh Document
-                </a>
-                @* <a href="@Url.Action("ConvertToMergeFields", "Home")" class="btn bt n-sm btn-outline-secondary ms-2">
-                    <i class="fas fa-refresh"></i> Convert Merge Fields
-                </a> *@
-            </small>
-        </div>
-        
         <div class="viewer mt-2">
-            @Html.TXTextControl().DocumentViewer(settings => {
+        	@Html.TXTextControl().DocumentViewer(settings => {
+                @* settings.DocumentPath = Server.MapPath("~/App_Data/signature.tx"); *@
                 settings.DocumentData = ViewBag.DocumentData;
                 settings.DocumentPath = ViewBag.DocumentName;
                 settings.Dock = DocumentViewerSettings.DockStyle.Fill;
-                settings.ShowThumbnailPane = true;
-                settings.ToolbarDocked = true;
-                settings.IsSelectionActivated = true;
-                @* settings.RenderMode = ComponentRenderMode.GlyphOutlines; *@
+                settings.IsSelectionActivated = false;
+                settings.ShowThumbnailPane = true; 
+                @* settings.SignatureSettings = new SignatureSettings() {
+                    ShowSignatureBar = true,
+                    OwnerName = "SalesChain",
+                    SignerName = "Tim Typer",
+                    SignerInitials = "TT",
+                    UniqueId = "1234567890",
+                    RedirectUrlAfterSignature = 
+                    this.Url.Action("SignDocument", "Signature", null, Context.Request.Scheme, null),
+                    SignatureBoxes = new SignatureBox[] { 
+                        new SignatureBox("txsign") { 
+                            SigningRequired = true, Style = SignatureBox.SignatureBoxStyle.Signature },
+                        new SignatureBox("txsign_init") { 
+                            SigningRequired = true, Style = SignatureBox.SignatureBoxStyle.Initials }}
+                }; *@
             }).Render()
         </div>
         

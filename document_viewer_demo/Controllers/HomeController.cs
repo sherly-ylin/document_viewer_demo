@@ -579,7 +579,7 @@ namespace document_viewer_demo.Controllers
                         }
                         catalogServer = resultTable.Rows[0]["MasterCatalogServer"].ToString();
                     }
-                    Console.WriteLine($"catalogServer={catalogServer}");
+                    // Console.WriteLine($"catalogServer={catalogServer}");
                     string priceLevels = "";
                     string priceLevelCmd = "";
                     query = @"SELECT STRING_AGG('PRICELEVEL' + CAST(PriceLevelID AS NVARCHAR), ',') cols,
@@ -598,9 +598,9 @@ namespace document_viewer_demo.Controllers
                         resultTable.Load(reader);
                         priceLevels = resultTable.Rows[0]["cols"].ToString();
                         priceLevelCmd = resultTable.Rows[0]["vals"].ToString();
-                        Console.WriteLine("===> priceLevels");
-                        Console.WriteLine(priceLevels);
-                        Console.WriteLine(priceLevelCmd);
+                        // Console.WriteLine("===> priceLevels");
+                        // Console.WriteLine(priceLevels);
+                        // Console.WriteLine(priceLevelCmd);
                     }
 
                     query = System.IO.File.ReadAllText("Documents/GetData Functions/DataQueryOL_processed.txt");
@@ -615,8 +615,8 @@ namespace document_viewer_demo.Controllers
                     using (var reader = command.ExecuteReader())
                     {
                         resultTable.Load(reader);
-                        Console.WriteLine("Total results rows: " + resultTable.Rows.Count);
-                        Console.WriteLine(JsonConvert.SerializeObject(resultTable));
+                        // Console.WriteLine("Total results rows: " + resultTable.Rows.Count);
+                        // Console.WriteLine(JsonConvert.SerializeObject(resultTable));
                     }
                 }
                 catch (Exception ex)
