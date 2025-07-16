@@ -23,11 +23,11 @@
                 settings.Dock = DocumentViewerSettings.DockStyle.Fill;
                 settings.IsSelectionActivated = false;
                 settings.ShowThumbnailPane = true; 
-                @* settings.SignatureSettings = new SignatureSettings() {
+                settings.SignatureSettings = new SignatureSettings() {
                     ShowSignatureBar = true,
                     OwnerName = "SalesChain",
-                    SignerName = "Tim Typer",
-                    SignerInitials = "TT",
+                    @* SignerName = "Tim Typer", *@
+                    @* SignerInitials = "TT", *@
                     UniqueId = "1234567890",
                     RedirectUrlAfterSignature = 
                     this.Url.Action("SignDocument", "Signature", null, Context.Request.Scheme, null),
@@ -36,7 +36,7 @@
                             SigningRequired = true, Style = SignatureBox.SignatureBoxStyle.Signature },
                         new SignatureBox("txsign_init") { 
                             SigningRequired = true, Style = SignatureBox.SignatureBoxStyle.Initials }}
-                }; *@
+                };
             }).Render()
         </div>
         

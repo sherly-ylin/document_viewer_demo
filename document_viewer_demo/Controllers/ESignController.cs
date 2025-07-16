@@ -10,12 +10,15 @@ using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json.Linq;
 using Microsoft.IdentityModel.Tokens;
-
+using System.Security.Cryptography.X509Certificates;
 namespace document_viewer_demo.Controllers
 {
     public class ESignController : Controller
     {
         private readonly ILogger<ESignController> _logger;
+        private const string CertificatePath = "Certificates/my_certificate.pfx";
+        private const string CertificatePassword = "123123123"; // ⚠️ Consider securing this outside of source code
+
         string connectionString = "Server=192.168.20.97;Database=SalesChain0602_MS_MN;User Id=ylin;Password=9244@Wahg;TrustServerCertificate=True;";
 
 
@@ -52,6 +55,99 @@ namespace document_viewer_demo.Controllers
             return View();
         }
 
+        [HttpPost]
+        public string SignDocument()
+        {
+            // read the payload
+            Stream inputStream = Request.InputStream;
+            inputStream.Position = 0;
+
+            StreamReader str = new StreamReader(inputStream);
+            string sBuf = str.ReadToEndAsync().Result;
+
+            // retrieve the signature data from the payload
+            TXTextControl.Web.MVC.DocumentViewer.Models.SignatureData data =
+              JsonConvert.DeserializeObject
+              <TXTextControl.Web.MVC.DocumentViewer.Models.SignatureData>(sBuf);
+
+            byte[] bPDF;
+
+            // create temporary ServerTextControl
+            using (TXTextControl.ServerTextControl tx = new TXTextControl.ServerTextControl())
+            {
+                tx.Create();
+
+                // load the document
+                tx.Load(Convert.FromBase64String(data.SignedDocument.Document),
+                  TXTextControl.BinaryStreamType.InternalUnicodeFormat);
+
+                // create a certificate
+                X509Certificate2 cert = new X509Certificate2(
+                       Server.MapPath("~/App_Data/textcontrolself.pfx"), "123");
+
+                // assign the certificate to the signature fields
+                TXTextControl.SaveSettings saveSettings = new TXTextControl.SaveSettings()
+                {
+                    CreatorApplication = "TX Text Control Sample Application",
+                    SignatureFields = new DigitalSignature[] {
+        new TXTextControl.DigitalSignature(cert, null, "txsign"),
+        new TXTextControl.DigitalSignature(cert, null, "txsign_init")}
+                };
+
+                // save the document as PDF
+                tx.Save(out bPDF, TXTextControl.BinaryStreamType.AdobePDFA, saveSettings);
+            }
+
+            // return as Base64 encoded string
+            return Convert.ToBase64String(bPDF);
+        }
+
+        // [HttpPost("SignDocument")]
+        // public IActionResult SignDocument([FromBody] SignatureData signatureData)
+        // {
+        //     if (signatureData?.SignedDocument?.Document == null || string.IsNullOrWhiteSpace(signatureData.UniqueId))
+        //     {
+        //         return BadRequest("Invalid signature data.");
+        //     }
+
+        //     try
+        //     {
+        //         byte[] signedDocumentBytes = Convert.FromBase64String(signatureData.SignedDocument.Document);
+        //         string outputFilePath = Path.Combine("Signed Documents", $"results_{signatureData.UniqueId}.pdf");
+
+        //         using (var tx = new ServerTextControl())
+        //         {
+        //             tx.Create();
+
+        //             // Load the document from Base64
+        //             tx.Load(signedDocumentBytes, BinaryStreamType.InternalUnicodeFormat);
+
+        //             // Load digital certificate
+        //             var certificate = new X509Certificate2(CertificatePath, CertificatePassword, X509KeyStorageFlags.Exportable);
+
+        //             // Assign the certificate to signature field
+        //             var saveSettings = new SaveSettings
+        //             {
+        //                 CreatorApplication = "TX Text Control Blazor Sample Application",
+        //                 SignatureFields = new[]
+        //                 {
+        //                 new DigitalSignature(certificate, null, "txsign")
+        //             }
+        //             };
+
+        //             // Save as signed PDF
+        //             tx.Save(outputFilePath, StreamType.AdobePDF, saveSettings);
+        //         }
+
+        //         return Ok(new { message = "Document signed successfully.", filePath = $"Signed Documents/results_{signatureData.UniqueId}.pdf" });
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         // Log the error 
+        //         Console.WriteLine($"Error during signing: {ex.Message}");
+        //         return StatusCode(500, "An error occurred while signing the document.");
+        //     }
+        // }
         void ConvertToMergeFields(ServerTextControl tx)
         {
             string pattern = @"\{\{(.*?)\}\}";
