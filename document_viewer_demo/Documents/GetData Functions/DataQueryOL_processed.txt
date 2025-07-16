@@ -83,9 +83,7 @@ SELECT CAST(ROW_NUMBER() OVER(ORDER BY OL.SeqNbr) as nvarchar) AS 'OL.INDEX',
    cast(OL.Quantity as nvarchar) AS 'OL.QTY', 
    dbo.fn_FormatCurrency(OD.BoardCreditAmt - (select sum(case when o.CatalogItemID < 0 then o.BuyPrice * o.Quantity else cp.BuyPrice * o.Quantity end) from SNOrderLine o with (nolock) left join SNCatalogPrice cp with (nolock) on cp.CatalogItemID = o.CatalogItemID left join SNPriceLevel PL with (nolock) on PL.PriceLevelID = CP.PriceLevelID where o.OrderID = OL.OrderID and isnull(PL.IsStandardInd,-1) <> 0)) AS 'OL.REVENUEABOVEBASE', 
    dbo.fn_FormatCurrency(case when OL.CatalogItemID < 0 then OL.BuyPrice else (select CP.BuyPrice from SNCatalogPrice CP with (nolock) join SNPriceLevel PL with (nolock) on PL.PriceLevelID = CP.PriceLevelID and PL.IsStandardInd <> 0 where CP.CatalogItemID = OL.CatalogItemID) end) '</OL.STANDARDPRICE>',
-   
-   @PriceLevels, 
-
+   @PriceLevels
    dbo.fn_FormatCurrency(ISNULL(OL.DealerCostAmt,0) * OL.Quantity) AS 'OL.TOTALDEALERCOST', 
    dbo.fn_FormatCurrency((select sum(case when o.CatalogItemID < 0 then o.BuyPrice * o.Quantity else cp.BuyPrice * o.Quantity end) from SNOrderLine o with (nolock) left join SNCatalogPrice cp with (nolock) on cp.CatalogItemID = o.CatalogItemID left join SNPriceLevel PL with (nolock) on PL.PriceLevelID = CP.PriceLevelID where o.OrderID = OL.OrderID and isnull(PL.IsStandardInd,-1) <> 0)) AS 'OL.TOTALSTANDARDBUY', 
    dbo.fn_FormatCurrency(OL.SellPrice) AS 'OL.UNITPRICE', 
@@ -123,7 +121,7 @@ SELECT CAST(ROW_NUMBER() OVER(ORDER BY OL.SeqNbr) as nvarchar) AS 'OL.INDEX',
                         left join SNPriceLevel pl with (nolock) on isnull(pl.IsStandardInd,0) = 0
                         left join SNCatalogPrice cp with (nolock) on cp.CatalogItemID = ol.CatalogItemID and cp.PriceLevelID = pl.PriceLevelID
                         where isnull(ol.ServiceInd,0) = 0 and ol.OrderID =  @OrderId ) d
-         pivot(max(BuyPrice) for tag in( @PriceLevelCols )) r) p on p.OrderLineId = OL.OrderLineId
+         pivot(max(BuyPrice) for tag in (@PriceLevelCols)) r) p on p.OrderLineId = OL.OrderLineId
 
 
    JOIN SNOrderLine BPOL on BPOL.OrderID = OD.OrderID and BPOL.BundleID = OL.BundleID and BPOL.BundleOrder = 1

@@ -561,6 +561,7 @@ namespace document_viewer_demo.Controllers
 
             string connectionString = "Server=192.168.20.97;Database=SalesChain0602_MS_MN;User Id=ylin;Password=9244@Wahg;TrustServerCertificate=True;";
             DataTable resultTable = new DataTable();
+
             string query = string.Empty;
             SqlCommand command = null;
             using (var conn = new SqlConnection(connectionString))
@@ -577,8 +578,8 @@ namespace document_viewer_demo.Controllers
                             resultTable.Load(reader);
                         }
                         catalogServer = resultTable.Rows[0]["MasterCatalogServer"].ToString();
-                        Console.WriteLine($"catalogServer={catalogServer}");
                     }
+                    Console.WriteLine($"catalogServer={catalogServer}");
                     string priceLevels = "";
                     string priceLevelCmd = "";
                     query = @"SELECT STRING_AGG('PRICELEVEL' + CAST(PriceLevelID AS NVARCHAR), ',') cols,
@@ -591,6 +592,7 @@ namespace document_viewer_demo.Controllers
                                 FROM SNPriceLevel WITH (NOLOCK)
                                 WHERE ISNULL(IsStandardInd, 0) = 0; ";
                     command = new SqlCommand(query, conn);
+                    resultTable = new DataTable();
                     using (var reader = command.ExecuteReader())
                     {
                         resultTable.Load(reader);
@@ -602,17 +604,19 @@ namespace document_viewer_demo.Controllers
                     }
 
                     query = System.IO.File.ReadAllText("Documents/GetData Functions/DataQueryOL_processed.txt");
+                    query = query.Replace("@CatalogServer", catalogServer);
+                    query = query.Replace("@PriceLevels", priceLevelCmd);
+                    query = query.Replace("@PriceLevelCols", priceLevels);
                     command = new SqlCommand(query, conn);
                     command.Parameters.AddWithValue("@OrderId", orderId);
-                    command.Parameters.AddWithValue("@CatalogServer", catalogServer);
-                    command.Parameters.AddWithValue("@PriceLevelCols", priceLevels);
-                    command.Parameters.AddWithValue("@PriceLevels", priceLevelCmd);
-                    Console.WriteLine("=== CommandText ===");
-                    Console.WriteLine(command.CommandText);
+                    resultTable = new DataTable();
+                    // Console.WriteLine("=== CommandText ===");
+                    // Console.WriteLine(command.CommandText);
                     using (var reader = command.ExecuteReader())
                     {
                         resultTable.Load(reader);
                         Console.WriteLine("Total results rows: " + resultTable.Rows.Count);
+                        Console.WriteLine(JsonConvert.SerializeObject(resultTable));
                     }
                 }
                 catch (Exception ex)
