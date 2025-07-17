@@ -1,0 +1,149 @@
+﻿@using TXTextControl.Web.MVC.DocumentViewer
+@using System.Text
+
+
+@{
+    ViewData["Title"] = "E-Sign";
+}
+
+@{
+    ViewData["Title"] = "Document Viewer Demo";
+}
+
+<div class="viewer-container">
+    @if (ViewBag.HasDocument != null && ViewBag.HasDocument)
+    {
+        <div class="viewer mt-2">
+        	@Html.TXTextControl().DocumentViewer(settings => {
+                @* settings.DocumentPath = Server.MapPath("~/App_Data/signature.tx"); *@
+                settings.DocumentData = ViewBag.DocumentData;
+                settings.DocumentPath = ViewBag.DocumentName;
+                settings.Dock = DocumentViewerSettings.DockStyle.Fill;
+                settings.IsSelectionActivated = false;
+                settings.ShowThumbnailPane = true; 
+                settings.SignatureSettings = new SignatureSettings() {
+                    ShowSignatureBar = true,
+                    OwnerName = "SalesChain",
+                    UniqueId = Guid.NewGuid().ToString("N"),
+                    RedirectUrlAfterSignature = 
+                    this.Url.Action("HandleSignature", "Signature"),
+                    SignatureBoxes = new SignatureBox[] { 
+                        new SignatureBox("sign1") { 
+                            SigningRequired = true, Style = SignatureBox.SignatureBoxStyle.Signature },
+                        new SignatureBox("sign2") { 
+                            SigningRequired = true, Style = SignatureBox.SignatureBoxStyle.Signature }}
+                };
+            }).Render()
+        </div>
+    }
+    else if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger" role="alert">
+            <h4 class="alert-heading"><i class="fas fa-exclamation-triangle"></i> Error Loading Document</h4>
+            <p>@ViewBag.ErrorMessage</p>
+            <hr>
+            <a href="@Url.Action("Index", "Home")" class="btn btn-outline-danger">
+                <i class="fas fa-redo"></i> Try Again
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info" role="alert">
+            <p><i class="fas fa-info-circle"></i> No document available to display.</p>
+        </div>
+    }
+</div>
+
+
+<script>
+window.addEventListener("documentViewerLoaded", function () {
+    TXDocumentViewer.signatures.setSubmitCallback(exportPDF);
+
+    TXDocumentViewer.addEventListener("signaturesCompleted", function () {
+        $("#signatureModal").modal('show');
+    });
+});
+
+function exportPDF(e) {
+    successFunc(e);
+}
+
+function successFunc(data, status) {
+
+    $("#signatureModal").modal('hide');
+
+    // create temporary link to download document
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:application/octet-stream;base64,' + data);
+    element.setAttribute('download', "result.pdf");
+
+    element.style.display = 'none';
+    document.body.appendChild(element);
+
+    // simulate click
+    element.click();
+
+    // remove the link
+    document.body.removeChild(element);
+
+    window.location.hash = '';
+    location.reload();
+}
+
+function errorFunc(data, status) {
+    console.log(data);
+}
+</script>
+
+<style>
+    .viewer-container {
+        margin: 1em;
+        align-items: center;
+        @* border: 1px solid #333; *@
+        width: 100%;
+    }
+
+    .viewer {
+        width: 100%;
+        height: 70vh;
+        max-height: max-content;
+        @* border: 1px solid #131c35; *@
+    }
+    #tx-documentViewer{
+        width: 100%;
+        height: 100%;
+    }
+
+    .alert {
+        margin-top: 20px;
+    }
+
+    .btn {
+        margin-right: 10px;
+    }
+
+
+    .page-selection-panel,.alert .download-options {
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: #f8f9fa;
+        width: 100% ;
+        margin-top: 1em;
+    }
+
+    .page-selection-panel h5,
+    .download-options h5 {
+        color: #495057;
+        margin-bottom: 15px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-control {
+        margin-bottom: 5px;
+    }
+</style>
