@@ -15,10 +15,10 @@
     {
         <div class="viewer mt-2">
         	@Html.TXTextControl().DocumentViewer(settings => {
-                @* settings.DocumentPath = Server.MapPath("~/App_Data/signature.tx"); *@
+                @* settings.DocumentPath = "Documents/signature.tx"; *@
                 settings.DocumentData = ViewBag.DocumentData;
                 settings.DocumentPath = ViewBag.DocumentName;
-                settings.Dock = DocumentViewerSettings.DockStyle.Fill;
+                settings.Dock = DocumentViewerSettings.DockStyle.Window;
                 settings.IsSelectionActivated = false;
                 settings.ShowThumbnailPane = true; 
                 settings.SignatureSettings = new SignatureSettings() {
@@ -26,7 +26,7 @@
                     OwnerName = "SalesChain",
                     UniqueId = Guid.NewGuid().ToString("N"),
                     RedirectUrlAfterSignature = 
-                    this.Url.Action("HandleSignature", "Signature"),
+                    this.Url.Action("HandleSignature", "Signature", null, Context.Request.Scheme, null),
                     SignatureBoxes = new SignatureBox[] { 
                         new SignatureBox("sign1") { 
                             SigningRequired = true, Style = SignatureBox.SignatureBoxStyle.Signature },
@@ -35,6 +35,10 @@
                 };
             }).Render()
         </div>
+                
+        <button onclick="exportPDF()" class="btn mt-3 btn-success">Export Signature Fields to PDF</button>
+        <button onclick="createDocument()" class="btn mt-3 btn-success">Sign Signature Fields using ServerTextControl</button>
+
     }
     else if (ViewBag.ErrorMessage != null)
     {
@@ -58,15 +62,45 @@
 
 <script>
 window.addEventListener("documentViewerLoaded", function () {
-    TXDocumentViewer.signatures.setSubmitCallback(exportPDF);
-
+    @* TXDocumentViewer.signatures.setSubmitCallback(exportPDF); *@
+    $("#tx-documentViewer").css("z-index", 800);
+    @* TXDocumentViewer.signatures.setBeforeSubmitCallback(function () {
+                    TextControl.esign.showToast("Sending document...");
+                }); *@
     TXDocumentViewer.addEventListener("signaturesCompleted", function () {
         $("#signatureModal").modal('show');
     });
 });
 
+
+@* function exportPDF() {
+
+    // save document
+    TXTextControl.saveDocument(TXTextControl.StreamType.AdobePDF, function (e) {
+        // create temporary link element
+        var element = document.createElement('a');
+        element.setAttribute('href', 'data:application/octet-stream;base64,' + e.data);
+        element.setAttribute('download', "signaturefields.pdf");
+
+        element.style.display = 'none';
+        document.body.appendChild(element);
+
+        // simulate click
+        element.click();
+
+        // remove the link
+        document.body.removeChild(element);
+
+        $('.alert .alert-text').text("Open the created PDF in Acrobat Reader to sign the signature fields.");
+        $('.alert').show();
+    });
+} *@
+
+
 function exportPDF(e) {
-    successFunc(e);
+
+
+    @* successFunc(e); *@
 }
 
 function successFunc(data, status) {

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using TXTextControl;
 using TXTextControl.DocumentServer;
 using TXTextControl.Web.MVC.DocumentViewer.Models;
+using System.Security.Cryptography.X509Certificates;
 
 namespace document_viewer_demo.Controllers
 {
@@ -43,51 +44,51 @@ namespace document_viewer_demo.Controllers
             return Task.FromResult<IActionResult>(View());
         }
 
-        public IActionResult Sign(string id)
+        [HttpPost]
+        public IActionResult HandleSignature([FromBody] SignatureData data)
         {
             try
             {
+                Console.WriteLine("=== HandleSignature called ===");
+                byte[] pdfBytes;
 
-                string document = LoadDocument("Documents/signature.tx", StreamType.InternalFormat);
-                // Envelope envelope = new Envelope() {
-                //     EnvelopeID = id, 
-                //     UserID = "testUser",
-                //     Sender = "Test Sender",
-                //     Name = "Test Envelope",
-                //     Created = DateTime.Now,
-                //     Sent = DateTime.Now.AddMinutes(5),
-                //     Status = EnvelopeStatus.Incomplete,
-                //     ContainsSignatureBoxes = true,
-                //     SignatureInformation = new SignatureModel() {
-                //         Document = document,
-                //         NumPages = 1,
-                //         SignerInitials = "TS",
-                //         SignerName = "Test Signer",
-                //         TimeStamp = DateTime.Now,
-                //         UniqueId = Guid.NewGuid().ToString(),
-                //         IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown"
-                //     }
-                // };
-
-                SignModel model = new SignModel()
+                using (var tx = new TXTextControl.ServerTextControl())
                 {
-                    Document = document
-                    // Envelope = envelope,
-                    // Signer = currentSigner
-                };
+                    tx.Create();
+                    tx.Load(Convert.FromBase64String(data.SignedDocument.Document), BinaryStreamType.InternalUnicodeFormat);
+                    byte[] signatureImage = Convert.FromBase64String(data.SignedDocument.SignatureBoxMergeResults[0].ImageResult);
 
-                return View(model);
+                    X509Certificate2 cert = new X509Certificate2("App_Data/testesigncert.pfx", "test123");
+                    var timeStampServer = "http://timestamp.digicert.com";
+
+                    List<DigitalSignature> signatures = new List<DigitalSignature>();
+
+                    foreach (SignatureField field in tx.SignatureFields)
+                    {
+                        // field.Name = Guid.NewGuid().ToString();
+                        Console.WriteLine("=== Processing Signature Field: " + field.Name + " ===");
+                        signatures.Add(new DigitalSignature(null, null, field.Name));
+                    }
+
+                    SaveSettings saveSettings = new SaveSettings()
+                    {
+                        CreatorApplication = "testesign",
+                        SignatureFields = signatures.ToArray()
+                    };
+
+                    tx.Save(out pdfBytes, BinaryStreamType.AdobePDFA, saveSettings);
+                    tx.Save($"App_Data/signed_{DateTime.Now:yyyyMMdd_HHmmss}.pdf", StreamType.AdobePDFA, saveSettings);
+                }
+                Console.WriteLine("=== PDF bytes generated ===");
+                return File(pdfBytes, "application/pdf", "SignedDoc.pdf");
+                // return Ok(new { message = "Document signed successfully.", filePath = $"Signed Documents/results_{signatureData.UniqueId}.pdf" });
             }
             catch (Exception ex)
             {
-                ViewBag.HasDocument = false;
-                ViewBag.ErrorMessage = ex.Message;
-                _logger.LogError(ex, "Error processing document template");
-                return View("Error", new { message = "An error occurred while processing the document." });
+                _logger.LogError(ex, $"Error handling signature");
+                return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred while processing the signature. {ex.Message}");
             }
-
         }
-
         private string LoadDocument(string filePath, StreamType streamType)
         {
             using (ServerTextControl tx = new ServerTextControl())
@@ -107,22 +108,6 @@ namespace document_viewer_demo.Controllers
             }
         }
 
-        [HttpPost]
-        public IActionResult HandleSignature([FromBody] SignatureData data)
-        {
-            byte[] pdfBytes;
-
-            using (var tx = new TXTextControl.ServerTextControl())
-            {
-                tx.Create();
-                tx.Load(Convert.FromBase64String(data.SignedDocument.Document), BinaryStreamType.InternalUnicodeFormat);
-                byte[] signatureImage = Convert.FromBase64String(data.SignedDocument.SignatureBoxMergeResults[0].ImageResult);
-                // Save without digital cert
-                tx.Save(out pdfBytes, TXTextControl.BinaryStreamType.AdobePDFA);
-            }
-
-            return File(pdfBytes, "application/pdf", "SignedDoc.pdf");
-        }
 
         // [HttpPost("SignDocument")]
         // public IActionResult SignDocument([FromBody] SignatureData signatureData)
