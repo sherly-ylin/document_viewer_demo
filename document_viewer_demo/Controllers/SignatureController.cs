@@ -56,7 +56,18 @@ namespace document_viewer_demo.Controllers
                 {
                     tx.Create();
                     tx.Load(Convert.FromBase64String(data.SignedDocument.Document), BinaryStreamType.InternalUnicodeFormat);
-                    byte[] signatureImage = Convert.FromBase64String(data.SignedDocument.SignatureBoxMergeResults[0].ImageResult);
+                    // byte[] signatureImage = Convert.FromBase64String(data.SignedDocument.SignatureBoxMergeResults[0].ImageResult);
+                    var signatureImage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(data.SignatureImage));
+
+                    var stamp = System.Text.Encoding.ASCII.GetBytes(signatureImage);
+                    using (MemoryStream ms = new MemoryStream(
+                           stamp, 0, stamp.Length, writable: false, publiclyVisible: true))
+                    {
+                        foreach (SignatureField field in tx.SignatureFields)
+                        {
+                            field.Image = new SignatureImage(ms);
+                        }
+                    }
 
                     X509Certificate2 cert = new X509Certificate2("App_Data/testesigncert.pfx", "test123");
                     var timeStampServer = "http://timestamp.digicert.com";
