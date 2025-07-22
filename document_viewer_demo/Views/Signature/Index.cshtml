@@ -18,26 +18,31 @@
                 @* settings.DocumentPath = "Documents/signature.tx"; *@
                 settings.DocumentData = ViewBag.DocumentData;
                 settings.DocumentPath = ViewBag.DocumentName;
-                settings.Dock = DocumentViewerSettings.DockStyle.Window;
-                settings.IsSelectionActivated = false;
+                settings.Dock = DocumentViewerSettings.DockStyle.Fill;
+                settings.IsSelectionActivated = true;
                 settings.ShowThumbnailPane = true; 
                 settings.SignatureSettings = new SignatureSettings() {
                     ShowSignatureBar = true,
                     OwnerName = "SalesChain",
                     UniqueId = Guid.NewGuid().ToString("N"),
-                    RedirectUrlAfterSignature = 
-                    this.Url.Action("HandleSignature", "Signature", null, Context.Request.Scheme, null),
+                    RedirectUrlAfterSignature = this.Url.Action(
+                        "HandleSignature", 
+                        "Signature", 
+                        new {secureID = "123"}, 
+                        Context.Request.Scheme, 
+                    null),
                     SignatureBoxes = new SignatureBox[] { 
-                        new SignatureBox("sign1") { 
+                        new SignatureBox("signer1") { 
                             SigningRequired = true, Style = SignatureBox.SignatureBoxStyle.Signature },
-                        new SignatureBox("sign2") { 
-                            SigningRequired = true, Style = SignatureBox.SignatureBoxStyle.Signature }}
+                        new SignatureBox("signer2") { 
+                            SigningRequired = true, Style = SignatureBox.SignatureBoxStyle.Signature }
+                    }
                 };
             }).Render()
         </div>
                 
-        <button onclick="exportPDF()" class="btn mt-3 btn-success">Export Signature Fields to PDF</button>
-        <button onclick="createDocument()" class="btn mt-3 btn-success">Sign Signature Fields using ServerTextControl</button>
+        @* <button onclick="exportPDF()" class="btn mt-3 btn-success">Export Signature Fields to PDF</button>
+        <button onclick="createDocument()" class="btn mt-3 btn-success">Sign Signature Fields using ServerTextControl</button> *@
 
     }
     else if (ViewBag.ErrorMessage != null)

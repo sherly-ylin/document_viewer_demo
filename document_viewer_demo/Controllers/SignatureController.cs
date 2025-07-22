@@ -14,6 +14,7 @@ namespace document_viewer_demo.Controllers
 
         string connectionString = "Server=192.168.20.97;Database=SalesChain0602_MS_MN;User Id=ylin;Password=9244@Wahg;TrustServerCertificate=True;";
 
+        string document;
 
         // private List<int> pageLengths { get; set; } = new List<int>();
         public SignatureController(ILogger<SignatureController> logger)
@@ -21,14 +22,29 @@ namespace document_viewer_demo.Controllers
             _logger = logger;
         }
 
-        public Task<IActionResult> Index()
+        // [SigningActionFilter]
+        public IActionResult Index()
         {
             try
             {
                 _logger.LogInformation("Document not found in session, generating new document");
                 string docBase64 = "";
 
-                docBase64 = LoadDocument("Documents/signature.tx", StreamType.InternalFormat);
+                using (ServerTextControl tx = new ServerTextControl())
+                {
+                    tx.Create();
+
+                    tx.Load("Documents/signature.tx", StreamType.InternalFormat);
+                    DeleteSignatureFields(tx, "signer1");
+
+                    using (MailMerge mailMerge = new MailMerge { TextComponent = tx })
+                    {
+                        // string jsonData = System.IO.File.ReadAllText("Documents/jsonData.json");
+                    }
+                    byte[] bytes;
+                    tx.Save(out bytes, BinaryStreamType.InternalUnicodeFormat);
+                    docBase64 = Convert.ToBase64String(bytes);
+                }
 
                 ViewBag.HasDocument = true;
                 ViewBag.DocumentData = docBase64;
@@ -41,7 +57,64 @@ namespace document_viewer_demo.Controllers
                 _logger.LogError(ex, "Error processing document template");
             }
 
-            return Task.FromResult<IActionResult>(View());
+            return View();
+        }
+
+        private void DeleteSignatureFields(ServerTextControl tx, string signerId = "signer1")
+        {
+            if (tx.SignatureFields.Count == 0)
+                return;
+
+            foreach (SignatureField field in tx.SignatureFields)
+            {
+
+                if (signerId != null)
+                {
+                    var fieldSignerId = field.Name;
+
+                    if (fieldSignerId == signerId)
+                        continue;
+                }
+
+                tx.SignatureFields.Remove(field);
+                // break;
+            }
+        }
+
+        private void DeleteFormFields(ServerTextControl tx, string signerId = "signer1")
+        {
+
+            Console.WriteLine("tx.FormFields.Count: " + tx.FormFields.Count);
+            if (tx.FormFields.Count == 0)
+                return;
+
+            bool bRemovedField = false;
+
+            foreach (FormField field in tx.FormFields)
+            {
+
+                if (signerId != null)
+                {
+                    var fieldSignerId = field.Name.Split(":")[0];
+
+                    if (fieldSignerId == signerId)
+                        continue;
+                }
+
+                tx.Selection.Start = field.Start;
+
+                var text = field.Text;
+
+                tx.FormFields.Remove(field);
+                tx.Selection.Text = text;
+
+                bRemovedField = true;
+
+                break;
+            }
+
+            if (bRemovedField == true)
+                DeleteFormFields(tx, signerId);
         }
 
         [HttpPost]
@@ -56,7 +129,55 @@ namespace document_viewer_demo.Controllers
                 {
                     tx.Create();
                     tx.Load(Convert.FromBase64String(data.SignedDocument.Document), BinaryStreamType.InternalUnicodeFormat);
+                    byte[] signatureImage = Convert.FromBase64String(data.SignedDocument.SignatureBoxMergeResults[0].ImageResult);
+
+                    X509Certificate2 cert = new X509Certificate2("App_Data/testesigncert.pfx", "test123");
+                    var timeStampServer = "http://timestamp.digicert.com";
+
+                    List<DigitalSignature> signatures = new List<DigitalSignature>();
+
+                    foreach (SignatureField field in tx.SignatureFields)
+                    {
+                        // field.Name = Guid.NewGuid().ToString();
+                        Console.WriteLine("=== Processing Signature Field: " + field.Name + " ===");
+                        signatures.Add(new DigitalSignature(null, null, field.Name));
+                    }
+
+                    SaveSettings saveSettings = new SaveSettings()
+                    {
+                        CreatorApplication = "testesign",
+                        SignatureFields = signatures.ToArray()
+                    };
+
+                    tx.Save(out pdfBytes, BinaryStreamType.AdobePDFA, saveSettings);
+                    tx.Save($"App_Data/signed_{DateTime.Now:yyyyMMdd_HHmmss}.pdf", StreamType.AdobePDFA, saveSettings);
+                }
+                Console.WriteLine("=== PDF bytes generated ===");
+                return File(pdfBytes, "application/pdf", "SignedDoc.pdf");
+                // return Ok(new { message = "Document signed successfully.", filePath = $"Signed Documents/results_{signatureData.UniqueId}.pdf" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error handling signature");
+                return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred while processing the signature. {ex.Message}");
+            }
+        }
+
+
+        [HttpPost]
+        public IActionResult PlainSignature([FromBody] SignatureData data)
+        {
+            try
+            {
+                Console.WriteLine("=== HandleSignature called ===");
+                byte[] pdfBytes;
+
+                using (var tx = new TXTextControl.ServerTextControl())
+                {
+                    tx.Create();
+                    tx.Load(Convert.FromBase64String(data.SignedDocument.Document), BinaryStreamType.InternalUnicodeFormat);
                     // byte[] signatureImage = Convert.FromBase64String(data.SignedDocument.SignatureBoxMergeResults[0].ImageResult);
+                    Console.WriteLine("=== Signature Image Data: " + data.SignatureImage + " ===");
                     var signatureImage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(data.SignatureImage));
 
                     var stamp = System.Text.Encoding.ASCII.GetBytes(signatureImage);
@@ -107,11 +228,11 @@ namespace document_viewer_demo.Controllers
                 tx.Create();
 
                 tx.Load(filePath, streamType);
+                // DeleteSignatureFields(tx, "signer1");
 
                 using (MailMerge mailMerge = new MailMerge { TextComponent = tx })
                 {
                     // string jsonData = System.IO.File.ReadAllText("Documents/jsonData.json");
-
                 }
                 byte[] bytes;
                 tx.Save(out bytes, BinaryStreamType.InternalUnicodeFormat);
